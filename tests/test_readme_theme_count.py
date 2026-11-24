@@ -89,7 +89,8 @@ NUMBER_WORDS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7
                 "twenty-one": 21, "twenty-two": 22, "twenty-three": 23, "twenty-four": 24, "twenty-five": 25,
                 "twenty-six": 26, "twenty-seven": 27, "twenty-eight": 28, "twenty-nine": 29, "thirty": 30, "thirty-one": 31,
                 "thirty-two": 32, "thirty-three": 33, "thirty-four": 34, "thirty-five": 35,
-                "thirty-six": 36, "thirty-seven": 37, "thirty-eight": 38,
+                "thirty-six": 36, "thirty-seven": 37, "thirty-eight": 38, "thirty-nine": 39,
+                "forty": 40, "forty-one": 41, "forty-two": 42, "forty-three": 43,
                 "zwei": 2, "drei": 3, "vier": 4, "fünf": 5, "sechs": 6, "sieben": 7, "acht": 8,
                 "neun": 9, "zehn": 10, "elf": 11, "zwölf": 12, "dreizehn": 13, "vierzehn": 14,
                 "fünfzehn": 15, "sechzehn": 16, "siebzehn": 17, "achtzehn": 18, "neunzehn": 19,
@@ -98,6 +99,7 @@ NUMBER_WORDS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7
                 "achtundzwanzig": 28, "neunundzwanzig": 29, "dreißig": 30, "einunddreißig": 31,
                 "zweiunddreißig": 32, "dreiunddreißig": 33, "vierunddreißig": 34,
                 "fünfunddreißig": 35, "sechsunddreißig": 36, "siebenunddreißig": 37, "achtunddreißig": 38,
+                "neununddreißig": 39, "vierzig": 40, "einundvierzig": 41, "zweiundvierzig": 42, "dreiundvierzig": 43,
                 "twee": 2, "drie": 3, "vijf": 5, "zes": 6, "zeven": 7, "negen": 9, "tien": 10,
                 "twaalf": 12, "dertien": 13, "veertien": 14, "vijftien": 15, "zestien": 16,
                 "zeventien": 17, "achttien": 18, "negentien": 19, "twintig": 20,
@@ -105,7 +107,8 @@ NUMBER_WORDS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7
                 "vijfentwintig": 25, "zesentwintig": 26, "zevenentwintig": 27, "achtentwintig": 28,
                 "negenentwintig": 29, "dertig": 30, "eenendertig": 31,
                 "tweeëndertig": 32, "drieëndertig": 33, "vierendertig": 34, "vijfendertig": 35,
-                "zesendertig": 36, "zevenendertig": 37, "achtendertig": 38,
+                "zesendertig": 36, "zevenendertig": 37, "achtendertig": 38, "negenendertig": 39,
+                "veertig": 40, "eenenveertig": 41, "tweeënveertig": 42, "drieënveertig": 43,
                 # Ukrainian, README.uk.md's row as it is written today. The apostrophe is the page's
                 # own: п'ять, дев'ять and п'ятнадцять carry a straight one there.
                 "два": 2, "три": 3, "чотири": 4, "п'ять": 5, "шість": 6, "сім": 7, "вісім": 8,
@@ -117,7 +120,8 @@ NUMBER_WORDS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7
                 "двадцять дев'ять": 29, "тридцять": 30, "тридцять одна": 31,
                 "тридцять дві": 32, "тридцять три": 33,
                 "тридцять чотири": 34, "тридцять п'ять": 35, "тридцять шість": 36, "тридцять сім": 37,
-                "тридцять вісім": 38}
+                "тридцять вісім": 38,
+                "тридцять дев'ять": 39, "сорок": 40, "сорок одна": 41, "сорок дві": 42, "сорок три": 43}
 # The row is read through that same table, so a thirteenth theme is "thirteen ship in themes/" and not
 # a row that states nothing. A second table for the row - one that stopped at twelve while this one
 # carried twenty - is what made the thirteenth theme fail as "the Themes row states no count".

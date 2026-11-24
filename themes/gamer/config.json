@@ -19,5 +19,7 @@
   "dock_opacity": 55,
   "glass_style": "rim",
   "ambient_glow": false,
-  "app_glow": true
+  "app_glow": true,
+  "wallpaper_drift": 3,
+  "wallpaper_effect": "stars"
 }

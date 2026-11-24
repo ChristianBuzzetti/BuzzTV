@@ -12,9 +12,24 @@ un **selector de temas en la TV**, para cambiar de tema con el control remoto si
 - **Biblioteca de temas en la TV.** Los temas viven en `Android/data/com.gathin.tvhome/files/themes/<nombre>/`,
   con la misma estructura que una carpeta de [`themes/`](../themes/). Se cargan desde la computadora con
   [`tools/themes.sh`](../tools/themes.sh) (en Windows, `tools\themes.ps1`).
-- **Cinco temas nuevos**, dibujados en código y con licencia CC0: [`gamer/`](../themes/gamer/),
-  [`cine/`](../themes/cine/), [`synthwave/`](../themes/synthwave/), [`estadio/`](../themes/estadio/) y
-  [`atardecer/`](../themes/atardecer/).
+- **Diez temas nuevos**, dibujados en código y con licencia CC0: [`gamer/`](../themes/gamer/),
+  [`cine/`](../themes/cine/), [`synthwave/`](../themes/synthwave/), [`estadio/`](../themes/estadio/),
+  [`atardecer/`](../themes/atardecer/), [`mesh/`](../themes/mesh/), [`cosmos/`](../themes/cosmos/),
+  [`neotokyo/`](../themes/neotokyo/), [`oceano/`](../themes/oceano/) y [`patagonia/`](../themes/patagonia/).
+
+## Fondos animados
+
+Dos claves nuevas para un tema, apagadas por defecto:
+
+- `"wallpaper_drift": 0-10`: el fondo hace un zoom y un paneo lentos (ida y vuelta en un minuto), en el
+  porcentaje indicado. Mueve la imagen entera sin redibujarla.
+- `"wallpaper_effect"`: una capa liviana de partículas sobre el fondo: `rain` (lluvia), `snow` (nieve),
+  `bubbles` (burbujas) o `stars` (estrellas que titilan y alguna fugaz).
+
+Solo se animan con Home al frente, a 20–30 cuadros por segundo como máximo, y se frenan al abrir una app, con
+el protector de pantalla o al apagar la TV. No corren con "Animaciones" apagado en Ajustes del launcher, con
+`reduced_motion`, ni en TVs que Android marca como de poca RAM. Los temas nuevos ya las traen: `neotokyo`
+(lluvia), `cosmos`, `gamer` y `synthwave` (estrellas), `oceano` (burbujas) y el zoom lento en los demás.
 
 ## Uso
 
@@ -47,7 +62,7 @@ que el original. La biblioteca solo se lee al abrir el selector, que decodifica 
 RGB_565 y fuera del hilo principal. Aplicar un tema copia sus archivos en segundo plano (con escritura
 atómica: archivo temporal y rename) y escribe un `theme_revision` nuevo, como hace `tools/theme.sh`. Los temas
 nuevos usan `wallpaper_true_color` apagado, igual que el valor por defecto, así que el fondo ocupa la misma
-memoria que cualquier otro tema con una sola imagen. El APK crece unos 6 KB.
+memoria que cualquier otro tema con una sola imagen. El APK crece unos 10 KB en total.
 
 ## Cómo funciona
 

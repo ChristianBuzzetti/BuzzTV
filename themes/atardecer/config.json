@@ -18,5 +18,6 @@
   "dock_glass": true,
   "dock_opacity": 40,
   "ambient_glow": false,
-  "app_glow": true
+  "app_glow": true,
+  "wallpaper_drift": 4
 }
