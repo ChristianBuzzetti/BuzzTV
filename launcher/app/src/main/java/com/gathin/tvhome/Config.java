@@ -211,6 +211,10 @@ final class Config {
     final List<File> wallpapers;
     final int wallpaperRotationMinutes;
     final int wallpaperDim;
+    /** wallpaper_drift: how far the wallpaper slowly zooms and pans, 0 (off) to 10 %; see WallpaperMotion. */
+    final int wallpaperDrift;
+    /** wallpaper_effect: a light particle layer over the wallpaper (rain, snow, bubbles, stars) or "none". */
+    final String wallpaperEffect;
     /** The dock band's opacity in percent (config.json dock_opacity, 30-100): below 100 the wallpaper shows through. */
     final int dockOpacity;
     /**
@@ -299,7 +303,9 @@ final class Config {
                    boolean handleViewInputs, boolean tileMenu, boolean dockEvenPadding, boolean dockBand, boolean cinematicDots, boolean cinematicWhiteFocus, boolean wifiStatusColor, int cinematicScrim, int cinematicArt,
                    Map<String, Set<String>> wallpaperMoods, boolean gamepadPassthrough, boolean consumeVolumeKeys, boolean volumePausesFilter, boolean homeIgnoreChannelKeys, boolean powerOnHome, boolean homeLongPressHome, boolean wifiStatusWarnings, List<String> topBarApps, boolean showGreeting, boolean headerWhite, boolean clockWallpaper, int clockWallpaperDim, boolean clockGlow, String glassStyle, boolean singleRow, boolean dockBandAll, boolean lunarDate, int lunarUtcOffset, boolean dateBelowClock, boolean vpnPill, String locale, boolean powerOnHomeAlways, boolean inputsConnectedOnly, boolean inputsCecStateOnly,
                    int openOnStartNetworkWait, boolean openOnStartOnWake, boolean iconOnlyVpn, String clockFormat, boolean backOpensClock, boolean glowSnap,
-                   boolean settingsKeyClearTask) {
+                   boolean settingsKeyClearTask, int wallpaperDrift, String wallpaperEffect) {
+        this.wallpaperDrift = wallpaperDrift;
+        this.wallpaperEffect = wallpaperEffect;
         this.handleViewInputs = handleViewInputs;
         this.tileMenu = tileMenu;
         this.inputKeycodes = inputKeycodes;
@@ -689,6 +695,9 @@ final class Config {
         if (!wallpaperEnabled) wallpaper = null;
         int rotationMinutes = json == null ? 0 : integer(json, "wallpaper_rotation_minutes", 0, 0, 1440);
         int wallpaperDim = json == null ? 0 : integer(json, "wallpaper_dim", 0, 0, 90);
+        int wallpaperDrift = json == null ? 0 : integer(json, "wallpaper_drift", 0, 0, 10);
+        String wallpaperEffect = json == null ? WallpaperMotion.NONE
+                : WallpaperMotion.effect(string(json, "wallpaper_effect", WallpaperMotion.NONE));
         int dockOpacity = json == null ? 100 : integer(json, "dock_opacity", 100, 30, 100);
         dockOpacity = chosenDockOpacity(choices.getInt(DOCK_OPACITY_KEY, -1), dockOpacity);
         clockFormat = choices.getString(CLOCK_FORMAT_KEY, clockFormat);
@@ -732,7 +741,7 @@ final class Config {
                 Math.max(0, Math.min(90, clockWallpaperDim)), clockGlow, glassStyle, singleRow && dockRow, dockBandAll, lunar, lunarOffset,
                 dateBelowClock, vpnPill, locale, powerOnHomeAlways, inputsConnectedOnly, inputsCecStateOnly,
                 Math.max(0, Math.min(600, openOnStartNetworkWait)), openOnStartOnWake, iconOnlyVpn, clockFormat, backOpensClock, glowSnap,
-                settingsKeyClearTask);
+                settingsKeyClearTask, wallpaperDrift, wallpaperEffect);
     }
 
     /**

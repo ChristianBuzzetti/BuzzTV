@@ -1,5 +1,6 @@
 package com.gathin.tvhome;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -59,6 +60,8 @@ final class WallpaperPlayer {
     private boolean captionAway;
     /** wallpaper_moods: the collection's groups by time of day; empty rotates through all of it. */
     private final Map<String, Set<String>> moods;
+    /** wallpaper_drift and wallpaper_effect; null when the theme asks for neither or this TV may not move. */
+    private WallpaperMotion motion;
     /** config.xml latitude and longitude for the sun's times, and today's {sunrise, sunset} once worked out. */
     private final String latitude, longitude;
     private LocalDate sunDay;
@@ -97,7 +100,23 @@ final class WallpaperPlayer {
             root.addView(image, 0, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             showFirst();
+            setUpMotion(context, config);
         }
+    }
+
+    /** Off unless the theme asks for it, and never with animations off, reduced_motion or on a low-RAM device. */
+    private void setUpMotion(Context context, Config config) {
+        if (!WallpaperMotion.wanted(config.wallpaperDrift, config.wallpaperEffect)) return;
+        ActivityManager am = context.getSystemService(ActivityManager.class);
+        boolean lowRam = am != null && am.isLowRamDevice();
+        if (!WallpaperMotion.allowed(config.animations, config.reducedMotion, lowRam)) return;
+        WallpaperEffectView effect = null;
+        if (!WallpaperMotion.NONE.equals(config.wallpaperEffect)) {
+            effect = new WallpaperEffectView(context, config.wallpaperEffect);
+            root.addView(effect, 1, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        motion = new WallpaperMotion(image, effect, config.wallpaperDrift);
     }
 
     /**
@@ -133,14 +152,17 @@ final class WallpaperPlayer {
     void start() {
         active = true;
         update();
+        if (motion != null) motion.start();
     }
 
     void stop() {
         active = false;
+        if (motion != null) motion.stop();
     }
 
     /** Drops the wallpaper texture when Home is hidden and Android asks the process to free memory. */
     void releaseForMemoryPressure() {
+        if (motion != null) motion.stop();
         if (current == null) return;
         image.setImageDrawable(null);
         // The renderer may still have a queued frame that references this hardware bitmap. Drop our references and
@@ -164,6 +186,7 @@ final class WallpaperPlayer {
     void close() {
         active = false;
         closed = true;
+        if (motion != null) motion.stop();
         decoder.shutdownNow();
     }
 
