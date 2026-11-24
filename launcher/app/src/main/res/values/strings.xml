@@ -58,6 +58,14 @@
     <string name="wallpaper_none">None</string>
     <string name="wallpaper_applied">Wallpaper changed</string>
     <string name="wallpaper_theme_default">Theme default</string>
+    <string name="theme_label">Theme</string>
+    <string name="theme_state">Theme: %1$s</string>
+    <string name="theme_original">Original</string>
+    <string name="theme_custom">Custom</string>
+    <string name="theme_active">Active</string>
+    <string name="theme_applied">Theme applied</string>
+    <string name="theme_failed">The theme could not be applied</string>
+    <string name="theme_library_empty">No themes on this TV yet. Send them from a computer with tools/themes.sh, then pick one here.</string>
     <string name="animations_state">Animations: %1$s</string>
     <string name="advanced_effects">Advanced effects</string>
     <string name="advanced_effects_state">Advanced effects: %1$s</string>

@@ -95,6 +95,14 @@
     <string name="wallpaper_none">Ninguno</string>
     <string name="wallpaper_applied">Fondo cambiado</string>
     <string name="wallpaper_theme_default">Predeterminado del tema</string>
+    <string name="theme_label">Tema</string>
+    <string name="theme_state">Tema: %1$s</string>
+    <string name="theme_original">Original</string>
+    <string name="theme_custom">Personalizado</string>
+    <string name="theme_active">Activo</string>
+    <string name="theme_applied">Tema aplicado</string>
+    <string name="theme_failed">No se pudo aplicar el tema</string>
+    <string name="theme_library_empty">Todavía no hay temas en esta TV. Envíalos desde una computadora con tools/themes.sh y elige uno aquí.</string>
     <string name="quick_picture">Imagen</string>
     <string name="quick_network">Red</string>
     <string name="quick_apps">Aplicaciones</string>

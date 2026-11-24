@@ -49,4 +49,33 @@ public class ThemeFilesTest {
         assertFalse(ThemeFiles.isCollection(Arrays.asList("wallpapers", "dusk.jpg")));
         assertFalse(ThemeFiles.isCollection(Collections.singletonList("config.json")));
     }
+
+    @Test public void libraryThemeFilesAreAllowed() {
+        assertEquals("themes/gamer/config.json", ThemeFiles.path(Arrays.asList("themes", "gamer", "config.json")));
+        assertEquals("themes/gamer/wallpaper.jpg", ThemeFiles.path(Arrays.asList("themes", "gamer", "wallpaper.jpg")));
+        assertEquals("themes/gamer/screenshot.jpg", ThemeFiles.path(Arrays.asList("themes", "gamer", "screenshot.jpg")));
+        assertEquals("themes/istanbul_v2/wallpapers/night.jpg",
+                ThemeFiles.path(Arrays.asList("themes", "istanbul_v2", "wallpapers", "night.jpg")));
+        assertEquals("themes/gamer/wallpapers/captions.txt",
+                ThemeFiles.path(Arrays.asList("themes", "gamer", "wallpapers", "captions.txt")));
+    }
+
+    @Test public void libraryPathsOutsideTheLayoutAreRefused() {
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "Gamer", "config.json")));
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "..", "config.json")));
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "gamer", "theme_revision")));
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "gamer", "run.sh")));
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "gamer", "wallpapers", "..")));
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "gamer", "wallpapers", "a", "b.jpg")));
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "gamer", "themes", "x", "config.json")));
+        assertNull(ThemeFiles.path(Arrays.asList("themes", "gamer")));
+    }
+
+    @Test public void aLibraryThemeIsDeletedOnlyByItsBareFolder() {
+        assertEquals("gamer", ThemeFiles.libraryTheme(Arrays.asList("themes", "gamer")));
+        assertNull(ThemeFiles.libraryTheme(Collections.singletonList("themes")));
+        assertNull(ThemeFiles.libraryTheme(Arrays.asList("themes", "..")));
+        assertNull(ThemeFiles.libraryTheme(Arrays.asList("themes", "gamer", "config.json")));
+        assertNull(ThemeFiles.libraryTheme(null));
+    }
 }

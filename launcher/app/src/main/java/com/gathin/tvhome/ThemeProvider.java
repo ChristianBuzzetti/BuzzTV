@@ -18,6 +18,8 @@ import java.io.FileNotFoundException;
  *   content write --uri content://com.gathin.tvhome.theme/wallpapers/dusk.jpg < /data/local/tmp/dusk.jpg
  *   content delete --uri content://com.gathin.tvhome.theme/config.json
  *   content delete --uri content://com.gathin.tvhome.theme/wallpapers      (every image in the collection)
+ *   content write --uri content://com.gathin.tvhome.theme/themes/gamer/config.json < ...   (tools/themes.sh)
+ *   content delete --uri content://com.gathin.tvhome.theme/themes/gamer    (a theme out of the library)
  */
 public class ThemeProvider extends ContentProvider {
 
@@ -50,6 +52,8 @@ public class ThemeProvider extends ContentProvider {
             if (images != null) for (File f : images) if (f.delete()) n++;
             return n;
         }
+        String library = ThemeFiles.libraryTheme(uri.getPathSegments());
+        if (dir != null && library != null) return ThemeLibrary.remove(dir, library) ? 1 : 0;
         try {
             return file(uri).delete() ? 1 : 0;
         } catch (FileNotFoundException e) {

@@ -24,7 +24,25 @@ final class ThemeFiles {
                 && (collectionImage(segments.get(1)) || WallpaperCaptions.FILE_NAME.equals(segments.get(1)))) {
             return WALLPAPERS + "/" + segments.get(1);
         }
+        // A theme kept in the library (ThemeLibrary): themes/<name>/<file> and themes/<name>/wallpapers/<image>.
+        if (segments.size() >= 3 && ThemeLibrary.DIR.equals(segments.get(0))
+                && ThemeLibrary.validName(segments.get(1))) {
+            String base = ThemeLibrary.DIR + "/" + segments.get(1) + "/";
+            if (segments.size() == 3) {
+                String name = segments.get(2);
+                return Config.FILE_NAME.equals(name) || "wallpaper.jpg".equals(name)
+                        || ThemeLibrary.SCREENSHOT.equals(name) ? base + name : null;
+            }
+            String rest = path(segments.subList(2, segments.size()));
+            return segments.size() == 4 && rest != null && rest.startsWith(WALLPAPERS + "/") ? base + rest : null;
+        }
         return null;
+    }
+
+    /** The library theme a delete of "themes/<name>" removes as a whole, or null. */
+    static String libraryTheme(List<String> segments) {
+        return segments != null && segments.size() == 2 && ThemeLibrary.DIR.equals(segments.get(0))
+                && ThemeLibrary.validName(segments.get(1)) ? segments.get(1) : null;
     }
 
     /** True for "wallpapers" alone: a delete of it clears the collection's images. */

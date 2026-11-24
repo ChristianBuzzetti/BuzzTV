@@ -122,6 +122,14 @@
     <string name="wallpaper_none">ללא</string>
     <string name="wallpaper_applied">הטפט שונה</string>
     <string name="wallpaper_theme_default">ברירת המחדל של ערכת הנושא</string>
+    <string name="theme_label">ערכת נושא</string>
+    <string name="theme_state">ערכת נושא: %1$s</string>
+    <string name="theme_original">מקורי</string>
+    <string name="theme_custom">מותאם אישית</string>
+    <string name="theme_active">פעיל</string>
+    <string name="theme_applied">ערכת הנושא הוחלה</string>
+    <string name="theme_failed">לא ניתן היה להחיל את ערכת הנושא</string>
+    <string name="theme_library_empty">אין עדיין ערכות נושא בטלוויזיה הזו. שלחו אותן ממחשב עם tools/themes.sh ובחרו אחת כאן.</string>
 
     <!-- Race-weekend panel (RaceWeekend). -->
     <string name="race_kicker">סבב %1$d · %2$s · %3$s</string>
