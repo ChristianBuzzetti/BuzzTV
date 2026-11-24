@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sala (bento) Home layout: 2-column Bento dashboard floating over the live wallpaper. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bentoRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingStart="36dp"
+    android:paddingEnd="36dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="28dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- Top header: warm amber vertical bar + Sala title + subtle Wi-Fi label. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="3dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bento_accent_bar"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/bentoTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/home_theme_bento"
+            android:textColor="#FFF5F1E8"
+            android:textSize="22sp"
+            android:fontFamily="@string/font_medium"
+            android:letterSpacing="0.02"
+            android:singleLine="true" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/bentoWifiStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#80F5F1E8"
+            android:textSize="13sp"
+            android:fontFamily="@string/font_regular"
+            android:letterSpacing="0.04"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:maxWidth="220dp" />
+    </LinearLayout>
+
+    <!-- Main Bento Grid: Left Hero Clock+Weather Card (54%) + Right 2x2 App Cards (46%). -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:baselineAligned="false"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <!-- Left Big Bento Hero Card -->
+        <LinearLayout
+            android:id="@+id/bentoHeroCard"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="54"
+            android:layout_marginEnd="14dp"
+            android:background="@drawable/bento_hero_card"
+            android:gravity="center_vertical|start"
+            android:orientation="vertical"
+            android:padding="32dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="true">
+
+                <TextClock
+                    android:id="@+id/bentoClock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:format12Hour="h:mm"
+                    android:format24Hour="HH:mm"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="76sp"
+                    android:fontFamily="@string/font_light"
+                    android:letterSpacing="-0.04"
+                    android:fontFeatureSettings="tnum"
+                    android:includeFontPadding="false" />
+
+                <TextClock
+                    android:id="@+id/bentoAmPm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:format12Hour="a"
+                    android:format24Hour=""
+                    android:textColor="#B3F5F1E8"
+                    android:textSize="20sp"
+                    android:fontFamily="@string/font_medium"
+                    android:letterSpacing="0.08"
+                    android:textAllCaps="true" />
+            </LinearLayout>
+
+            <TextClock
+                android:id="@+id/bentoDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="8dp"
+                android:format12Hour="@string/date_format"
+                android:format24Hour="@string/date_format"
+                android:textColor="#CCFFFFFF"
+                android:textSize="18sp"
+                android:fontFamily="@string/font_regular"
+                android:letterSpacing="0.03"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <!-- Live weather row, shown once a reading arrives. -->
+            <LinearLayout
+                android:id="@+id/bentoWeatherRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <com.gathin.tvhome.WeatherIconView
+                    android:id="@+id/bentoWeatherIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:id="@+id/bentoWeatherText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F2F5F1E8"
+                    android:textSize="22sp"
+                    android:fontFamily="@string/font_light"
+                    android:letterSpacing="0.02"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Right 2x2 Bento Grid of top 4 favorite apps -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="46"
+            android:orientation="vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <!-- Top Row: Tile 0 & Tile 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginBottom="12dp"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                android:clipChildren="false"
+                android:clipToPadding="false">
+
+                <LinearLayout
+                    android:id="@+id/bentoTile0"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/bento_tile_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="14dp"
+                    android:nextFocusLeft="@+id/bentoTile0"
+                    android:nextFocusUp="@+id/bentoTile0"
+                    android:nextFocusRight="@+id/bentoTile1"
+                    android:nextFocusDown="@+id/bentoTile2">
+
+                    <ImageView
+                        android:id="@+id/bentoTileIcon0"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:importantForAccessibility="no" />
+
+                    <TextView
+                        android:id="@+id/bentoTileLabel0"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textColor="#FFF5F1E8"
+                        android:textSize="15sp"
+                        android:fontFamily="@string/font_medium" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bentoTile1"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bento_tile_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="14dp"
+                    android:nextFocusLeft="@+id/bentoTile0"
+                    android:nextFocusUp="@+id/bentoTile1"
+                    android:nextFocusRight="@+id/bentoTile1"
+                    android:nextFocusDown="@+id/bentoTile3">
+
+                    <ImageView
+                        android:id="@+id/bentoTileIcon1"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:importantForAccessibility="no" />
+
+                    <TextView
+                        android:id="@+id/bentoTileLabel1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textColor="#FFF5F1E8"
+                        android:textSize="15sp"
+                        android:fontFamily="@string/font_medium" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Bottom Row: Tile 2 & Tile 3 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                android:clipChildren="false"
+                android:clipToPadding="false">
+
+                <LinearLayout
+                    android:id="@+id/bentoTile2"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/bento_tile_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="14dp"
+                    android:nextFocusLeft="@+id/bentoTile2"
+                    android:nextFocusUp="@+id/bentoTile0"
+                    android:nextFocusRight="@+id/bentoTile3"
+                    android:nextFocusDown="@+id/bentoBtnInputs">
+
+                    <ImageView
+                        android:id="@+id/bentoTileIcon2"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:importantForAccessibility="no" />
+
+                    <TextView
+                        android:id="@+id/bentoTileLabel2"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textColor="#FFF5F1E8"
+                        android:textSize="15sp"
+                        android:fontFamily="@string/font_medium" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bentoTile3"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bento_tile_bg"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="14dp"
+                    android:nextFocusLeft="@+id/bentoTile2"
+                    android:nextFocusUp="@+id/bentoTile1"
+                    android:nextFocusRight="@+id/bentoTile3"
+                    android:nextFocusDown="@+id/bentoBtnSettings">
+
+                    <ImageView
+                        android:id="@+id/bentoTileIcon3"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:scaleType="fitCenter"
+                        android:importantForAccessibility="no" />
+
+                    <TextView
+                        android:id="@+id/bentoTileLabel3"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:textColor="#FFF5F1E8"
+                        android:textSize="15sp"
+                        android:fontFamily="@string/font_medium" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom Bento Action Bar: 3 equal-width wide rounded pills -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="84dp"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal"
+        android:baselineAligned="false"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:id="@+id/bentoBtnApps"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="14dp"
+            android:background="@drawable/bento_action_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:nextFocusLeft="@+id/bentoBtnApps"
+            android:nextFocusUp="@+id/bentoTile2"
+            android:nextFocusRight="@+id/bentoBtnInputs"
+            android:nextFocusDown="@+id/bentoBtnApps">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_apps"
+                android:tint="#FFF5B963"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/quick_apps"
+                android:textColor="#FFF5F1E8"
+                android:textSize="19sp"
+                android:fontFamily="@string/font_medium"
+                android:singleLine="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/bentoBtnInputs"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="14dp"
+            android:background="@drawable/bento_action_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:nextFocusLeft="@+id/bentoBtnApps"
+            android:nextFocusUp="@+id/bentoTile2"
+            android:nextFocusRight="@+id/bentoBtnSettings"
+            android:nextFocusDown="@+id/bentoBtnInputs">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_input"
+                android:tint="#FFF5B963"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/inputs"
+                android:textColor="#FFF5F1E8"
+                android:textSize="19sp"
+                android:fontFamily="@string/font_medium"
+                android:singleLine="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/bentoBtnSettings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bento_action_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:nextFocusLeft="@+id/bentoBtnInputs"
+            android:nextFocusUp="@+id/bentoTile3"
+            android:nextFocusRight="@+id/bentoBtnSettings"
+            android:nextFocusDown="@+id/bentoBtnSettings">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_settings"
+                android:tint="#FFF5B963"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings"
+                android:textColor="#FFF5F1E8"
+                android:textSize="19sp"
+                android:fontFamily="@string/font_medium"
+                android:singleLine="true" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

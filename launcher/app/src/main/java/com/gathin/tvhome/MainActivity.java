@@ -202,6 +202,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView raceKicker, raceHeadline, raceSessions;
     /** game_day: each team's next game from an add-on, rotating in the race panel; null when the key is off. */
     private GameDay gameDay;
+    /** weather_live: automatic city weather beside the clock; null when neither widget nor weather animation is active. */
+    private LiveWeather liveWeather;
+    private boolean weatherLive;
+    private String wallpaperAnimation = Config.WALLPAPER_ANIMATION_NONE;
+    private String homeTheme = HomeTheme.STANDARD;
+    private CustomHomeLayout customLayout;
+    private Dialog allAppsDialog;
+    private String lastWifiLabel = "";
+    private Map<String, String> launchActionsMap = Collections.emptyMap();
+    private View weatherRow;
+    private WeatherIconView weatherIcon;
+    private TextView weatherText;
     private View raceBar;
     private LinearLayout racePager;
     private long rotationStart;
@@ -263,6 +275,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean dockRow;
     /** config single_row: every app in the dock's row, scrolling sideways, no grid below. */
     private boolean singleRow;
+    /** rows_below_dock 0 hides the rows under the dock until focus leaves it (veilBelowDock). */
+    private boolean veilBelowDock;
+    private boolean belowDockHidden;
     /** The highlight springs past its target (config.xml, focus_overshoot); false goes straight there. */
     private boolean focusOvershoot;
     /** Festive skin from the theme (see Festival); applied while it is active today. */
@@ -496,6 +511,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         openOnStartOnWake = OpenOnStart.onWake(cfg.openOnStartChoice, cfg.openOnStartOnWake);
         liveTvAction = cfg.liveTvAction;
         liveTvInputId = cfg.liveTvInputId;
+        launchActionsMap = cfg.launchActions;
         appLibraryEnabled = cfg.appLibrary;
         tileMenuEnabled = cfg.tileMenu;
         inputAction = cfg.inputAction;
@@ -516,8 +532,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
         glass = findViewById(R.id.glass);
+        homeTheme = cfg.homeTheme;
+        wallpaperAnimation = cfg.wallpaperAnimation;
+        weatherLive = cfg.weatherLive;
         glass.setStyle(cfg.glassStyle);
-        if (festive) glass.setAccent(festival.accentColor());
+        int defaultAccent = defaultGlassAccent();
+        if (defaultAccent != 0) glass.setAccent(defaultAccent);
         ambient = findViewById(R.id.ambient);
         // The glow is one bitmap, so its alpha can be applied while drawing it. Otherwise every frame of
         // a fade renders it into a full-screen offscreen buffer first.
@@ -585,6 +605,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         raceBar = findViewById(R.id.raceBar);
         racePager = findViewById(R.id.racePager);
         gameDay = GameDay.create(this, cfg.gameDay, handler, this::updatePanel);
+        weatherRow = findViewById(R.id.weatherRow);
+        weatherIcon = findViewById(R.id.weatherIcon);
+        weatherText = findViewById(R.id.weatherText);
+        if (cfg.weatherLive || Config.WALLPAPER_ANIMATION_WEATHER.equals(cfg.wallpaperAnimation)) {
+            liveWeather = new LiveWeather(this, handler, this::onLiveWeather);
+        }
         // The rotation runs on the clock that never jumps: setting the TV's time must not stall or stretch a turn.
         rotationStart = SystemClock.elapsedRealtime();
         showStats = cfg.showStats;
@@ -706,6 +732,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // tvOS layout: push the dock row towards the bottom of the screen, leaving room for
         // rows_below_dock grid rows under it; the rest of the grid stays below until you press Down.
         int rowsBelowDock = cfg.rowsBelowDock;
+        veilBelowDock = rowsBelowDock == 0 && dockRow && !singleRow;
+        belowDockHidden = true;
         grid.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             int h = b - t;
             // Item height follows the tile size, which follows the columns and the rows that must fit (AppAdapter.tileWidthPx).
@@ -943,6 +971,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
         if (festive) applyFestiveSkin((TextView) btnInputs, (TextView) btnSettings);
+        if (HomeTheme.usesCustomLayout(homeTheme)) attachCustomHomeLayout(cfg);
+        else if (!HomeTheme.isStandard(homeTheme)) applyHomeTheme(cfg);
 
         // Hide the glass when focus leaves the tiles.
         // Taken off in onDestroy: recreate() keeps the window, and a listener left on it held every earlier Home.
@@ -1150,6 +1180,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (showStats) startStats();
         if (gameDay != null) gameDay.start();
+        if (liveWeather != null) liveWeather.start();
         sky.update();
         wallpaperPlayer.start();
         handler.postDelayed(minuteTick, MINUTE_MS);
@@ -1283,6 +1314,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         lastFocusedKey = returnKey;
         lastFocused = returnSlot;
         packageSequence = currentPackageSequence(packageSequence);
+        if (customLayout != null) customLayout.onAppsChanged();
     }
 
     /**
@@ -1290,6 +1322,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * reload() the view that holds focus may no longer show the app it had.
      */
     private void restoreFocus() {
+        if (customLayout != null) {
+            tilesReady = true;
+            return;
+        }
         final boolean returnToLibrary = libraryFocusPending;
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
@@ -1335,11 +1371,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         startPending = null;   // leaving Home before the network came back: the boot's app stays closed
         stopStats();
         if (gameDay != null) gameDay.stop();
+        if (liveWeather != null) liveWeather.stop();
         handler.removeCallbacks(turnTick);
         if (lamp != null) lamp.stop();
         cancelPendingFocusScroll();
         // Nothing of ours stays on screen over another app; an undecided prompt simply returns next time.
         if (cardPrompt != null) cardPrompt.dismiss();
+        if (allAppsDialog != null) allAppsDialog.dismiss();
         if (appLibrary != null) appLibrary.close();
         if (openPopup != null) openPopup.dismiss();
     }
@@ -1403,6 +1441,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         RemoteKeys.release(this);
         cancelHoldOk();
         if (gameDay != null) gameDay.shutdown();
+        if (liveWeather != null) liveWeather.shutdown();
         unregisterReceiver(packageReceiver);
         if (openOnStartOnWake) unregisterReceiver(wakeReceiver);
         wallpaperPlayer.close();
@@ -1413,6 +1452,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             cm.unregisterNetworkCallback(networkCallback);
             cm.unregisterNetworkCallback(vpnCallback);
         }
+    }
+
+    /** Updates the top-left weather line (when live weather is on) and swaps the wallpaper effect when set to weather. */
+    private void onLiveWeather(LiveWeather.Reading reading) {
+        if (reading == null) return;
+        if (weatherLive) {
+            if (customLayout != null) {
+                customLayout.onWeather(reading);
+            } else if (weatherRow != null && weatherIcon != null && weatherText != null) {
+                weatherIcon.setKind(LiveWeather.iconKind(reading.weatherCode, reading.isDay));
+                String condition = getString(LiveWeather.conditionRes(reading.weatherCode));
+                weatherText.setText(LiveWeather.formatHeader(reading.tempC, condition, reading.city));
+                weatherRow.setVisibility(View.VISIBLE);
+            }
+        }
+        if (wallpaperPlayer != null && Config.WALLPAPER_ANIMATION_WEATHER.equals(wallpaperAnimation)) {
+            wallpaperPlayer.setWeatherEffect(LiveWeather.effectFor(reading));
+        }
+    }
+
+    /** Default glass focus accent: festive accent first, then active HomeTheme accent, else plain white (0). */
+    private int defaultGlassAccent() {
+        return festive ? festival.accentColor() : HomeTheme.focusAccent(homeTheme);
     }
 
     /**
@@ -1679,7 +1741,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (movingKey != null) {
             return pos != RecyclerView.NO_POSITION && movingKey.equals(adapter.keyAt(pos)) ? 1f : 0.45f;
         }
+        if (GridNavigation.veiled(veilBelowDock && belowDockHidden && !reordering && !dockEditing, pos, COLUMNS)) return 0f;
         return GridNavigation.idleAlpha(pos, COLUMNS, dockEditing, dockEditSlot, reordering);
+    }
+
+    /**
+     * rows_below_dock 0 (BuzzTV): the rows under the dock are invisible while focus is in the dock or the top bar,
+     * so nothing peeks in under the dock band, and they fade in as soon as Down leaves the dock.
+     */
+    private void veilBelowDock(int focusedPosition) {
+        if (!veilBelowDock) return;
+        boolean hide = DockSlots.inDockRow(dockRow, singleRow, focusedPosition, COLUMNS);
+        if (hide == belowDockHidden) return;
+        belowDockHidden = hide;
+        for (int i = 0; i < grid.getChildCount(); i++) {
+            View item = grid.getChildAt(i);
+            float to = tileAlpha(grid.getChildAdapterPosition(item));
+            if (animations && !reducedMotion) item.animate().alpha(to).setDuration(160).start();
+            else item.setAlpha(to);
+        }
     }
 
     /** Ends the mode and saves the order if it changed since the mode started. */
@@ -1692,7 +1772,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         reordering = false;
         dimOthers();   // drop() ran while reordering was still on; restore full brightness now the mode is off
         adapter.setReordering(false);
-        glass.setAccent(festive ? festival.accentColor() : 0);
+        glass.setAccent(defaultGlassAccent());
         btnReorder.setActivated(false);
         List<String> keys = adapter.movableKeys();
         List<String> before = orderAtStart;
@@ -1789,6 +1869,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
+        if (customLayout != null && customLayout.handleBack()) return;
         // Home screen: Back goes nowhere, unless back_opens_clock is on.
         if (backOpensClock) startActivity(new Intent(this, ClockActivity.class));
     }
@@ -1828,6 +1909,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onTileFocused(int position, View card) {
+        veilBelowDock(position);
         lastFocused = position;
         lastFocusedKey = adapter.keyAt(position);
         // Focus restored before the first layout (cold start): the tile has no size yet, and the glass
@@ -1857,7 +1939,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             lp.height = (int) h;
             glass.setLayoutParams(lp);
             // GlassView draws its slab inset by pad, i.e. exactly over the zoomed tile: same corners as the tile.
-            glass.setRadius(AppAdapter.cornerRadius(card.getWidth(), density) * scale);
+            glass.setRadius(AppAdapter.cornerRadius(card.getWidth(), density) * scale * HomeTheme.focusCornerScale(homeTheme));
         }
         glassCardW = card.getWidth();
         glassCardRect.set(r);
@@ -1865,9 +1947,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glassTargetY = y;
         // Cinematic shelf: the highlight glows in the dock app's colour, plain white in the grid (and on the dock with
         // cinematic_white_focus). app_glow: every tile. In a single row every tile is the dock's kind.
-        boolean coloured = (appGlow || cinematic && !cinematicWhiteFocus && (singleRow || position < COLUMNS)) && !festive;
-        int accent = coloured ? adapter.ambientColorAt(position) : 0;
-        if ((cinematic || appGlow) && !festive && accent != glassAccent) {
+        int themeAccent = defaultGlassAccent();
+        boolean coloured = (appGlow || cinematic && !cinematicWhiteFocus && (singleRow || position < COLUMNS)) && themeAccent == 0;
+        int accent = coloured ? adapter.ambientColorAt(position) : themeAccent;
+        if ((cinematic || appGlow) && themeAccent == 0 && accent != glassAccent) {
             glassAccent = accent;
             glass.setAccent(accent);
         }
@@ -2530,13 +2613,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // The column now wraps its texts, so they must wrap too: a match_parent TextView does not ask for a new
         // layout when its text gets longer, and the column kept the width of the day before ("TUESDAY 27 OCTOB…").
         ViewGroup texts = (ViewGroup) column;
+        boolean rtl = getResources().getBoolean(R.bool.rtl_menu_bar);
         for (int i = 0; i < texts.getChildCount(); i++) {
             View text = texts.getChildAt(i);
             LinearLayout.LayoutParams textLp = (LinearLayout.LayoutParams) text.getLayoutParams();
             textLp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
             // Keep each line where its own gravity put it (right in Hebrew) now that it no longer fills the column.
-            textLp.gravity = ((TextView) text).getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK;
+            if (text instanceof TextView) {
+                textLp.gravity = ((TextView) text).getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK;
+            } else {
+                textLp.gravity = rtl ? Gravity.RIGHT : Gravity.LEFT;
+            }
             text.setLayoutParams(textLp);
+        }
+        if (weatherText != null && weatherText.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+            LinearLayout.LayoutParams wlp = (LinearLayout.LayoutParams) weatherText.getLayoutParams();
+            wlp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            wlp.weight = 0f;
+            weatherText.setLayoutParams(wlp);
         }
     }
 
@@ -2576,6 +2670,450 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 + (clock.getHeight() - buttons.getHeight()) / 2f);
         clockRow.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> align.run());
         buttons.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> align.run());
+    }
+
+    /**
+     * Applies one of the non-standard {@link HomeTheme} layouts (Cinema, Bento/Sala, Gaming, Minimal)
+     * without changing the chosen wallpaper or breaking D-pad navigation.
+     */
+    private void applyHomeTheme(Config cfg) {
+        TextView clock = findViewById(R.id.clock);
+        TextView ampm = findViewById(R.id.ampm);
+        View divider = findViewById(R.id.clockDivider);
+        TextView date = findViewById(R.id.date);
+        LinearLayout left = (LinearLayout) clockBlock;
+        LinearLayout topButtons = findViewById(R.id.topButtons);
+        View scrim = findViewById(R.id.heroScrim);
+
+        clock.setTextSize(TypedValue.COMPLEX_UNIT_SP, HomeTheme.clockSizeSp(homeTheme));
+        styleThemedPills(homeTheme);
+
+        if (HomeTheme.CINEMA.equals(homeTheme)) {
+            greeting.setVisibility(View.VISIBLE);
+            greeting.setAllCaps(false);
+            greeting.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f);
+            greeting.setLetterSpacing(0.01f);
+            greetingColor = 0xFFF6EFE2;
+            greeting.setTextColor(greetingColor);
+            clock.setTextColor(0xFFF6EFE2);
+            divider.setBackgroundColor(0x55F6D58E);
+            ViewGroup.LayoutParams dlp = divider.getLayoutParams();
+            dlp.height = Math.round(18 * density);
+            divider.setLayoutParams(dlp);
+            date.setTextColor(0xCCF6EFE2);
+            heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 58f);
+            heroName.setTextColor(HomeTheme.ACCENT_CINEMA);
+            heroName.setShadowLayer(12f * density, 0f, 3f * density, 0xCC000000);
+            if (!cinematic && scrim != null) {
+                scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                        new int[]{0x38080C14, 0x00080C14, 0xC8080C14}));
+                scrim.setVisibility(View.VISIBLE);
+            }
+        } else if (HomeTheme.BENTO.equals(homeTheme)) {
+            if (!cfg.dateBelowClock) moveDateBelowClock();
+            greeting.setVisibility(View.VISIBLE);
+            greeting.setAllCaps(false);
+            greeting.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
+            greeting.setLetterSpacing(0.03f);
+            greetingColor = 0xFFF4ECE0;
+            greeting.setTextColor(greetingColor);
+            // Warm amber vertical bar accent beside "Sala", matching the bento card aesthetic.
+            GradientDrawable bar = new GradientDrawable();
+            bar.setColor(HomeTheme.ACCENT_BENTO);
+            bar.setCornerRadius(2f * density);
+            bar.setBounds(0, 0, Math.round(3.5f * density), Math.round(16 * density));
+            greeting.setCompoundDrawablesRelative(bar, null, null, null);
+            greeting.setCompoundDrawablePadding(Math.round(10 * density));
+            greeting.setPadding(0, 0, 0, Math.round(6 * density));
+
+            GradientDrawable cardBg = new GradientDrawable();
+            cardBg.setColor(0x8C121418);
+            cardBg.setCornerRadius(20f * density);
+            cardBg.setStroke(Math.max(1, Math.round(density)), 0x4DF5B963);
+            left.setBackground(cardBg);
+            int padH = Math.round(24 * density);
+            int padV = Math.round(16 * density);
+            left.setPadding(padH, padV, padH, padV);
+            RelativeLayout.LayoutParams llp = (RelativeLayout.LayoutParams) left.getLayoutParams();
+            llp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            left.setLayoutParams(llp);
+            ViewGroup.LayoutParams glp = greeting.getLayoutParams();
+            glp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            greeting.setLayoutParams(glp);
+            View bentoClockRow = (View) clock.getParent();
+            ViewGroup.LayoutParams bcrp = bentoClockRow.getLayoutParams();
+            bcrp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            bentoClockRow.setLayoutParams(bcrp);
+
+            date.setAllCaps(false);
+            date.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
+            date.setLetterSpacing(0.02f);
+            date.setTextColor(0xCCFFFFFF);
+            if (weatherText != null) {
+                weatherText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f);
+                weatherText.setTextColor(0xFFF4ECE0);
+            }
+            if (weatherIcon != null) {
+                ViewGroup.LayoutParams ilp = weatherIcon.getLayoutParams();
+                ilp.width = Math.round(20 * density);
+                ilp.height = Math.round(20 * density);
+                weatherIcon.setLayoutParams(ilp);
+            }
+            RelativeLayout.LayoutParams tlp = (RelativeLayout.LayoutParams) topButtons.getLayoutParams();
+            tlp.removeRule(RelativeLayout.ALIGN_BOTTOM);
+            tlp.addRule(RelativeLayout.ALIGN_TOP, R.id.leftBlock);
+            tlp.topMargin = Math.round(4 * density);
+            tlp.bottomMargin = 0;
+            topButtons.setLayoutParams(tlp);
+
+            if (!cinematic && scrim != null) {
+                scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                        new int[]{0x00100E0C, 0x00100E0C, 0x8C100E0C}));
+                scrim.setVisibility(View.VISIBLE);
+            }
+        } else if (HomeTheme.GAMING.equals(homeTheme)) {
+            greeting.setVisibility(View.VISIBLE);
+            greeting.setAllCaps(true);
+            greeting.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f);
+            greeting.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            greeting.setLetterSpacing(0.08f);
+            greetingColor = 0xFFFFFFFF;
+            greeting.setTextColor(greetingColor);
+
+            clock.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            clock.setTextColor(HomeTheme.ACCENT_GAMING);
+            ampm.setTextColor(0xCC4ADE80);
+            divider.setBackgroundColor(0x664ADE80);
+            ViewGroup.LayoutParams dlp = divider.getLayoutParams();
+            dlp.height = Math.round(16 * density);
+            divider.setLayoutParams(dlp);
+            date.setTextColor(0xD9FFFFFF);
+            date.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+
+            heroName.setAllCaps(true);
+            heroName.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 42f);
+            heroName.setLetterSpacing(0.04f);
+            heroName.setTextColor(0xFFFFFFFF);
+            heroName.setShadowLayer(10f * density, 0f, 2f * density, 0xCC000000);
+
+            if (!cinematic && scrim != null) {
+                scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                        new int[]{0x70080B0E, 0x26080B0E, 0xCC080B0E}));
+                scrim.setVisibility(View.VISIBLE);
+            }
+        } else if (HomeTheme.MINIMAL.equals(homeTheme)) {
+            greeting.setVisibility(View.GONE);
+            if (!cfg.dateBelowClock) moveDateBelowClock();
+            RelativeLayout.LayoutParams llp = (RelativeLayout.LayoutParams) left.getLayoutParams();
+            llp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            llp.removeRule(RelativeLayout.ALIGN_PARENT_START);
+            llp.removeRule(RelativeLayout.START_OF);
+            llp.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            llp.setMarginEnd(0);
+            left.setLayoutParams(llp);
+            left.setGravity(Gravity.CENTER_HORIZONTAL);
+
+            View clockRow = (View) clock.getParent();
+            LinearLayout.LayoutParams crp = (LinearLayout.LayoutParams) clockRow.getLayoutParams();
+            crp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+            crp.gravity = Gravity.CENTER_HORIZONTAL;
+            clockRow.setLayoutParams(crp);
+
+            View dateCol = (View) date.getParent();
+            LinearLayout.LayoutParams dcp = (LinearLayout.LayoutParams) dateCol.getLayoutParams();
+            dcp.gravity = Gravity.CENTER_HORIZONTAL;
+            dateCol.setLayoutParams(dcp);
+            if (dateCol instanceof LinearLayout) ((LinearLayout) dateCol).setGravity(Gravity.CENTER_HORIZONTAL);
+            date.setGravity(Gravity.CENTER_HORIZONTAL);
+            if (weatherRow instanceof LinearLayout) {
+                LinearLayout.LayoutParams wrp = (LinearLayout.LayoutParams) weatherRow.getLayoutParams();
+                wrp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                wrp.gravity = Gravity.CENTER_HORIZONTAL;
+                weatherRow.setLayoutParams(wrp);
+            }
+
+            RelativeLayout.LayoutParams tlp = (RelativeLayout.LayoutParams) topButtons.getLayoutParams();
+            tlp.removeRule(RelativeLayout.ALIGN_BOTTOM);
+            tlp.addRule(RelativeLayout.ALIGN_TOP, R.id.leftBlock);
+            tlp.topMargin = Math.round(6 * density);
+            tlp.bottomMargin = 0;
+            topButtons.setLayoutParams(tlp);
+        }
+    }
+
+    /** Applies theme-matched pill backgrounds with a clear focused-state rim so D-pad focus stays crisp. */
+    private void styleThemedPills(String theme) {
+        int bgColor = HomeTheme.pillBgColor(theme);
+        int strokeColor = HomeTheme.pillStrokeColor(theme);
+        if (bgColor == 0 || strokeColor == 0) return;
+        float radius = HomeTheme.pillCornerDp(theme) * density;
+        int focusAccent = HomeTheme.focusAccent(theme);
+        int focusBg = focusAccent != 0 ? ((focusAccent & 0x00FFFFFF) | 0x33000000) : 0x44FFFFFF;
+        int focusStroke = focusAccent != 0 ? focusAccent : 0xFFFFFFFF;
+        int strokePx = Math.max(1, Math.round(density));
+        int focusStrokePx = Math.max(2, Math.round(2f * density));
+
+        List<View> pills = new ArrayList<>(Arrays.asList(btnInputs, btnWifi, btnVpn, btnReorder, btnLibraryTop, findViewById(R.id.btnSettings)));
+        pills.addAll(topAppButtons);
+        for (View pill : pills) {
+            if (pill == null) continue;
+            GradientDrawable normal = new GradientDrawable();
+            normal.setColor(bgColor);
+            normal.setCornerRadius(radius);
+            normal.setStroke(strokePx, strokeColor);
+
+            GradientDrawable focused = new GradientDrawable();
+            focused.setColor(focusBg);
+            focused.setCornerRadius(radius);
+            focused.setStroke(focusStrokePx, focusStroke);
+
+            android.graphics.drawable.StateListDrawable state = new android.graphics.drawable.StateListDrawable();
+            state.addState(new int[]{android.R.attr.state_focused}, focused);
+            state.addState(new int[]{}, normal);
+            pill.setBackground(state);
+        }
+    }
+
+    /**
+     * Replaces the standard dock+grid container with an architectural {@link CustomHomeLayout}
+     * (Gaming, Bento/Sala, or Cinema) while keeping {@link WallpaperPlayer}, animations, and weather live.
+     */
+    private void attachCustomHomeLayout(Config cfg) {
+        View standard = findViewById(R.id.standardContent);
+        if (standard != null) standard.setVisibility(View.GONE);
+        hero.setVisibility(View.GONE);
+        ambient.setVisibility(View.GONE);
+        glass.setVisibility(View.GONE);
+        racePanel.setVisibility(View.GONE);
+        heroArt.setVisibility(View.GONE);
+        View scrim = findViewById(R.id.heroScrim);
+        if (scrim != null) scrim.setVisibility(View.GONE);
+
+        if (HomeTheme.GAMING.equals(homeTheme)) {
+            customLayout = new GamingHomeLayout(this);
+        } else if (HomeTheme.BENTO.equals(homeTheme)) {
+            customLayout = new BentoHomeLayout(this);
+        } else {
+            customLayout = new CinemaHomeLayout(this);
+        }
+        View view = customLayout.rootView();
+        root.addView(view, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        ClockFormat.apply(view, clockFormat);
+        clockRefresh = new ClockRefresh(view);
+        customLayout.bind(createHomeLayoutHost());
+    }
+
+    private HomeLayoutHost createHomeLayoutHost() {
+        return new HomeLayoutHost() {
+            @Override
+            public List<AppAdapter.Entry> dockApps() {
+                return extractEntries(Math.min(adapter.dockFilled(), adapter.appCount()));
+            }
+
+            @Override
+            public List<AppAdapter.Entry> allApps() {
+                return extractEntries(adapter.appCount());
+            }
+
+            @Override
+            public void launchApp(AppAdapter.Entry app) {
+                launchCustomEntry(app);
+            }
+
+            @Override
+            public void openInputs(View anchor) {
+                showInputs(anchor);
+            }
+
+            @Override
+            public void openWifi() {
+                openNetworkPill();
+            }
+
+            @Override
+            public void openSettings() {
+                open(systemIntent(Settings.ACTION_SETTINGS));
+            }
+
+            @Override
+            public void openLauncherSettings() {
+                startActivityForResult(new Intent(MainActivity.this, LauncherSettingsActivity.class),
+                        LAUNCHER_SETTINGS_REQUEST);
+            }
+
+            @Override
+            public void openAllApps() {
+                openAllAppsDialog();
+            }
+
+            @Override
+            public String wifiLabel() {
+                return lastWifiLabel.isEmpty() ? getString(R.string.wifi) : lastWifiLabel;
+            }
+        };
+    }
+
+    private List<AppAdapter.Entry> extractEntries(int limit) {
+        List<AppAdapter.Entry> out = new ArrayList<>();
+        PackageManager pm = getPackageManager();
+        int count = Math.min(limit, adapter.appCount());
+        for (int i = 0; i < count; i++) {
+            String key = adapter.keyAt(i);
+            String pkg = adapter.packageAt(i);
+            String label = adapter.labelAt(i);
+            if (key == null || pkg == null || label.isEmpty() || pkg.equals(getPackageName())) continue;
+            ComponentName cn = ComponentName.unflattenFromString(key);
+            if (cn == null) continue;
+            Drawable art = adapter.artworkAt(i);
+            Drawable banner = null;
+            Drawable icon = null;
+            if (art != null && AppAdapter.isBannerShaped(art.getIntrinsicWidth(), art.getIntrinsicHeight())) {
+                banner = art;
+            } else {
+                icon = art;
+            }
+            if (icon == null) {
+                try {
+                    icon = pm.getApplicationIcon(pkg);
+                } catch (PackageManager.NameNotFoundException ignored) {
+                }
+            }
+            out.add(new AppAdapter.Entry(label, cn, banner, icon));
+        }
+        return out;
+    }
+
+    private void launchCustomEntry(AppAdapter.Entry app) {
+        if (app == null) return;
+        String action = launchActionsMap.get(app.pkg);
+        String inputId = LaunchActions.inputId(action);
+        if (inputId != null) {
+            openInput(inputId);
+            return;
+        }
+        PackageManager pm = getPackageManager();
+        Intent launch = null;
+        if (action != null) {
+            Intent byAction = LaunchActions.intent(app.pkg, action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (pm.resolveActivity(byAction, 0) != null) launch = byAction;
+        }
+        if (launch == null) {
+            launch = new Intent(Intent.ACTION_MAIN)
+                    .setComponent(app.component)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+            if (pm.getLeanbackLaunchIntentForPackage(app.pkg) != null) {
+                launch.addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
+            }
+        }
+        open(launch);
+        LastOpened.record(this, app.pkg);
+    }
+
+    /** Clean full-screen app grid dialog for custom themes so every installed app is 1 click away. */
+    private void openAllAppsDialog() {
+        if (allAppsDialog != null && allAppsDialog.isShowing()) allAppsDialog.dismiss();
+        List<AppAdapter.Entry> apps = extractEntries(adapter.appCount());
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setBackgroundColor(0xEE0C1017);
+        int padH = Math.round(52 * density);
+        int padV = Math.round(32 * density);
+        container.setPadding(padH, padV, padH, padV);
+
+        TextView title = new TextView(this);
+        title.setText(R.string.quick_apps);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tlp.bottomMargin = Math.round(20 * density);
+        container.addView(title, tlp);
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.setVerticalScrollBarEnabled(false);
+        android.widget.GridLayout gridLayout = new android.widget.GridLayout(this);
+        gridLayout.setColumnCount(4);
+        int accent = HomeTheme.focusAccent(homeTheme);
+        int focusStroke = accent != 0 ? accent : 0xFFFFFFFF;
+        int tileW = Math.round(196 * density);
+        int tileH = Math.round(112 * density);
+        int margin = Math.round(8 * density);
+
+        View firstTile = null;
+        for (AppAdapter.Entry entry : apps) {
+            LinearLayout tile = new LinearLayout(this);
+            tile.setOrientation(LinearLayout.VERTICAL);
+            tile.setGravity(Gravity.CENTER);
+            tile.setFocusable(true);
+            tile.setClickable(true);
+            int innerPad = Math.round(10 * density);
+            tile.setPadding(innerPad, innerPad, innerPad, innerPad);
+
+            GradientDrawable normal = new GradientDrawable();
+            normal.setColor(0xFF161C26);
+            normal.setCornerRadius(12f * density);
+            normal.setStroke(Math.max(1, Math.round(density)), 0x26FFFFFF);
+
+            GradientDrawable focused = new GradientDrawable();
+            focused.setColor(0xFF222C3B);
+            focused.setCornerRadius(12f * density);
+            focused.setStroke(Math.max(2, Math.round(2.5f * density)), focusStroke);
+
+            android.graphics.drawable.StateListDrawable bg = new android.graphics.drawable.StateListDrawable();
+            bg.addState(new int[]{android.R.attr.state_focused}, focused);
+            bg.addState(new int[]{}, normal);
+            tile.setBackground(bg);
+
+            ImageView img = new ImageView(this);
+            if (entry.banner != null) {
+                img.setLayoutParams(new LinearLayout.LayoutParams(Math.round(104 * density), Math.round(58 * density)));
+                img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                img.setImageDrawable(entry.banner);
+            } else {
+                int s = Math.round(42 * density);
+                img.setLayoutParams(new LinearLayout.LayoutParams(s, s));
+                img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                img.setImageDrawable(entry.icon);
+            }
+            tile.addView(img);
+
+            TextView label = new TextView(this);
+            label.setText(entry.label);
+            label.setTextColor(Color.WHITE);
+            label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f);
+            label.setSingleLine(true);
+            label.setEllipsize(TextUtils.TruncateAt.END);
+            label.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            llp.topMargin = Math.round(6 * density);
+            tile.addView(label, llp);
+
+            tile.setOnClickListener(v -> {
+                dialog.dismiss();
+                launchCustomEntry(entry);
+            });
+            android.widget.GridLayout.LayoutParams glp = new android.widget.GridLayout.LayoutParams();
+            glp.width = tileW;
+            glp.height = tileH;
+            glp.setMargins(margin, margin, margin, margin);
+            gridLayout.addView(tile, glp);
+            if (firstTile == null) firstTile = tile;
+        }
+        scroll.addView(gridLayout);
+        container.addView(scroll, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        dialog.setContentView(container);
+        dialog.setOnDismissListener(d -> {
+            if (allAppsDialog == dialog) allAppsDialog = null;
+        });
+        allAppsDialog = dialog;
+        dialog.show();
+        if (firstTile != null) firstTile.requestFocus();
     }
 
     /** The first top-bar button after Inputs that is shown, in bar order (top_bar_apps, the network pill, ...); Settings is always there. */
@@ -2791,8 +3329,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             greeting.setText(festiveGreeting);
             greeting.setTextColor(liftTowardsWhite(festival.accentColor(), 0.25f));
         } else {
-            greeting.setText(greetingName.isEmpty() ? getString(res)
-                    : getString(R.string.greeting_with_name, getString(res), greetingName));
+            String base = greetingName.isEmpty() ? getString(res)
+                    : getString(R.string.greeting_with_name, getString(res), greetingName);
+            if (HomeTheme.GAMING.equals(homeTheme)) {
+                greeting.setText(getString(R.string.home_theme_gaming));
+            } else if (HomeTheme.CINEMA.equals(homeTheme)) {
+                greeting.setText(greetingName.isEmpty()
+                        ? getString(R.string.home_theme_cinema)
+                        : getString(R.string.home_theme_cinema) + " \u00B7 " + greetingName);
+            } else if (HomeTheme.BENTO.equals(homeTheme)) {
+                greeting.setText(greetingName.isEmpty()
+                        ? getString(R.string.home_theme_bento)
+                        : getString(R.string.home_theme_bento) + " \u00B7 " + greetingName);
+            } else {
+                greeting.setText(base);
+            }
             greeting.setTextColor(greetingColor);
         }
         if (shamsi) shamsiDate.setText(Shamsi.today(getResources()));
@@ -2999,6 +3550,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         } catch (Exception ignored) {
         }
+        lastWifiLabel = text;
+        if (customLayout != null) customLayout.onWifiChanged(lastWifiLabel);
         // With a VPN app configured, a VPN that is down matters too: show a red "VPN off" capsule then.
         boolean vpnDown = !vpn && online && !vpnApp.isEmpty();
         if (vpnPill) updateVpnPill(vpn);
@@ -3426,6 +3979,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */
     private void showInputs() {
+        showInputs(null);
+    }
+
+    private void showInputs(View customAnchor) {
         // A configured source panel and no Live TV row to offer next to it: the panel is the whole menu.
         // The BYINTEK U4 needs this, as its TvInputManager lists three HDMI ports and an AV input it doesn't have.
         List<CoocaaSources.Source> coocaa = coocaaSources ? CoocaaSources.list(this) : Collections.emptyList();
@@ -3436,8 +3993,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // top_menu: the pill is gone, so the list hangs under the gear, growing inward from the right.
         // Read the switch, not the pill: show_inputs_pill=false hides the pill too, and there the list
         // keeps its usual place.
-        boolean underGear = topMenu;
-        View anchor = findViewById(underGear ? R.id.btnSettings : R.id.btnInputs);
+        boolean underGear = topMenu && customAnchor == null;
+        View anchor = customAnchor != null ? customAnchor : findViewById(underGear ? R.id.btnSettings : R.id.btnInputs);
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
 

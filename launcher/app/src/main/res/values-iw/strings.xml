@@ -130,6 +130,19 @@
     <string name="theme_applied">ערכת הנושא הוחלה</string>
     <string name="theme_failed">לא ניתן היה להחיל את ערכת הנושא</string>
     <string name="theme_library_empty">אין עדיין ערכות נושא בטלוויזיה הזו. שלחו אותן ממחשב עם tools/themes.sh ובחרו אחת כאן.</string>
+    <string name="wallpaper_motion_state">רקע מונפש: %1$s</string>
+    <string name="weather_live_state">מזג אוויר חי: %1$s</string>
+    <string name="weather_clear">בהיר</string>
+    <string name="weather_partly_cloudy">מעונן חלקית</string>
+    <string name="weather_cloudy">מעונן</string>
+    <string name="weather_fog">ערפל</string>
+    <string name="weather_drizzle">טפטוף</string>
+    <string name="weather_rain">גשם</string>
+    <string name="weather_snow">שלג</string>
+    <string name="weather_storm">סופת רעמים</string>
+    <string name="background_random_all">הכול, באקראי</string>
+    <string name="background_random_in">%1$s, באקראי</string>
+    <string name="background_default">ברירת מחדל</string>
 
     <!-- Race-weekend panel (RaceWeekend). -->
     <string name="race_kicker">סבב %1$d · %2$s · %3$s</string>
@@ -160,4 +173,34 @@
     <string name="clock_format_system">מערכת</string>
     <string name="clock_format_12">12 שעות</string>
     <string name="clock_format_24">24 שעות</string>
+    <string name="home_theme_label">עיצוב / ערכת נושא</string>
+    <string name="home_theme_state">עיצוב / ערכת נושא: %1$s</string>
+    <string name="home_theme_standard">רגיל</string>
+    <string name="home_theme_cinema">קולנוע ביתי</string>
+    <string name="home_theme_bento">סלון</string>
+    <string name="home_theme_gaming">מצב משחק</string>
+    <string name="home_theme_minimal">מינימליסטי</string>
+    <string name="wallpaper_animation_label">אנימציית רקע</string>
+    <string name="wallpaper_animation_state">אנימציית רקע: %1$s</string>
+    <string name="animation_none">כבוי</string>
+    <string name="animation_auto">לפי הרקע</string>
+    <string name="animation_weather">לפי מזג האוויר</string>
+    <string name="animation_rain">גשם</string>
+    <string name="animation_storm">סופת רעמים</string>
+    <string name="animation_snow">שלג</string>
+    <string name="animation_stars">כוכבים</string>
+    <string name="animation_sunbeams">קרני שמש</string>
+    <string name="animation_clouds">עננים</string>
+    <string name="animation_bubbles">בועות</string>
+    <string name="animation_fireflies">גחליליות</string>
+    <string name="animation_motes">חלקיקי אור</string>
+    <string name="wallpaper_rotation_label">החלפת רקע אוטומטית</string>
+    <string name="rotation_1m">1 דק׳</string>
+    <string name="rotation_5m">5 דק׳</string>
+    <string name="rotation_10m">10 דק׳</string>
+    <string name="rotation_20m">20 דק׳</string>
+    <string name="rotation_60m">שעה</string>
+    <string name="cinema_open">▶  פתיחה</string>
+    <string name="cinema_subtitle">אפליקציה מועדפת · OK לפתיחה</string>
+    <string name="cinema_all_apps_subtitle">הצגת כל האפליקציות המותקנות</string>
 </resources>

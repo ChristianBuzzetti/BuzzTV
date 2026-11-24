@@ -10,6 +10,11 @@ final class GridNavigation {
         return position % columns == columns - 1 || position == count - 1;
     }
 
+    /** True for a tile under the dock row while rows_below_dock 0 keeps those rows hidden. */
+    static boolean veiled(boolean hiding, int pos, int columns) {
+        return hiding && pos >= columns;
+    }
+
     /** Dim level of a non-carried tile: edit-dock dims only the other dock places, Move mode dims every tile. */
     static float idleAlpha(int pos, int columns, boolean dockEditing, int dockEditSlot, boolean reordering) {
         if (dockEditing) return dockEditSlot >= 0 && pos >= 0 && pos < columns && pos != dockEditSlot ? 0.45f : 1f;

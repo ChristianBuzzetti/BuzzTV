@@ -27,5 +27,6 @@
   "ambient_glow": false,
   "app_glow": false,
   "focus_overshoot": false,
-  "advanced_effects": true
+  "advanced_effects": true,
+  "wallpaper_effect": "rain"
 }

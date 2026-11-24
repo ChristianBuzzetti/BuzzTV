@@ -56,11 +56,15 @@ The launcher's own page has these rows, top to bottom:
   its own row (`dock_row`, on by default).
 - **Clock**: **System** follows the TV's 12- or 24-hour setting; **12-hour** or **24-hour** sets the launcher's
   clocks (Home and the clock screensaver) to that, whatever the TV uses (`clock_format` in a theme).
-- **Wallpaper**: one picture from the theme's collection (or its `wallpaper.jpg`), **None**, or **Theme
-  default**. A pick holds that picture and stops the rotation until you choose Theme default, press
-  Follow theme, or push the theme again.
-- **Animations** on or off, and **Advanced effects** (tile lift, icon zoom and smooth ambient-colour
-  transitions; they may use more memory) once animations are on.
+- **Background** (BuzzTV): **All, at random**, or a section of the on-TV library (`tools/themes.sh`; Christmas,
+  Patagonia, ...) and then that section **at random** or one of its pictures. There is no "none": a background
+  always has a picture. The choice is the background alone, read straight from the library: the dock, buttons,
+  columns and every other choice stay as they are. A random background changes every 20 minutes (or its
+  section's `wallpaper_rotation_minutes`); captions never show.
+- **Animated background** (BuzzTV), off until switched on: every background then zooms slowly, and the ones with a
+  `wallpaper_effect` add rain, snow, bubbles or stars. There is no separate Animations row any more.
+- **Rows below dock 0** (BuzzTV) shows nothing under the dock band; the rows fade in as soon as Down leaves it.
+- **Advanced effects** (tile lift, icon zoom and smooth ambient-colour transitions; they may use more memory).
 - **Open on start**, only with `open_on_start_choice`: Off, or an app that opens instead of Home the first
   time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
 - **Follow theme (reset on-TV choices)**, which clears every choice above. Pushing or resetting a theme

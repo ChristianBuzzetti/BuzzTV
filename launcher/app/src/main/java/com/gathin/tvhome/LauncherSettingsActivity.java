@@ -34,9 +34,11 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] dockChoices = new TextView[DOCK_OPACITIES.length];
     private static final String[] CLOCK_FORMATS = {"system", "12", "24"};
     private final TextView[] clockChoices = new TextView[CLOCK_FORMATS.length];
+    private final TextView[] rotationChoices = new TextView[Config.WALLPAPER_ROTATION_CHOICES.length];
+    private TextView homeThemeChoice;
     private TextView themeChoice;
-    private TextView wallpaperChoice;
-    private TextView animationsChoice;
+    private TextView wallpaperMotionChoice;
+    private TextView weatherLiveChoice;
     private TextView advancedChoice;
     private TextView followThemeChoice;
     private TextView openOnStartChoice;
@@ -44,6 +46,9 @@ public final class LauncherSettingsActivity extends Activity {
     private int rowsBelowDock;
     private int dockOpacity;
     private String clockFormat;
+    private String homeTheme;
+    private String wallpaperAnimation;
+    private int wallpaperRotationMinutes;
     private boolean animations;
     private boolean advancedEffects;
 
@@ -63,6 +68,11 @@ public final class LauncherSettingsActivity extends Activity {
         rowsBelowDock = config.rowsBelowDock;
         dockOpacity = config.dockOpacity;
         clockFormat = config.clockFormat;
+        homeTheme = config.homeTheme;
+        wallpaperAnimation = config.wallpaperAnimation;
+        int savedRot = choices.getInt(Config.WALLPAPER_ROTATION_KEY, 0);
+        wallpaperRotationMinutes = savedRot > 0 ? savedRot
+                : (config.wallpaperRotationMinutes > 0 ? config.wallpaperRotationMinutes : BackgroundLibrary.DEFAULT_ROTATION_MINUTES);
         animations = config.animations;
         advancedEffects = config.animations && config.advancedEffects;
 
@@ -114,6 +124,18 @@ public final class LauncherSettingsActivity extends Activity {
                 refresh();
             });
         }
+        int[] rotIds = {R.id.rot1, R.id.rot5, R.id.rot10, R.id.rot20, R.id.rot60};
+        for (int i = 0; i < rotIds.length; i++) {
+            final int value = Config.WALLPAPER_ROTATION_CHOICES[i];
+            rotationChoices[i] = findViewById(rotIds[i]);
+            rotationChoices[i].setOnClickListener(v -> {
+                if (wallpaperRotationMinutes == value && choices.contains(Config.WALLPAPER_ROTATION_KEY)) return;
+                wallpaperRotationMinutes = value;
+                choices.edit().putInt(Config.WALLPAPER_ROTATION_KEY, value).apply();
+                changed();
+                refresh();
+            });
+        }
         // Mirror text alignment without globally opting the launcher into RTL. Numeric rows
         // still need explicit ordering in Android's no-supportsRtl compatibility mode.
         if (getResources().getBoolean(R.bool.rtl_menu_bar))
@@ -123,21 +145,22 @@ public final class LauncherSettingsActivity extends Activity {
             reverseRow(rowChoices);
             reverseRow(dockChoices);
             reverseRow(clockChoices);
+            reverseRow(rotationChoices);
         }
+        homeThemeChoice = findViewById(R.id.homeThemeChoice);
+        homeThemeChoice.setOnClickListener(v -> showHomeThemePicker());
         themeChoice = findViewById(R.id.themeChoice);
-        // A theme from the library replaces the active one; Home rebuilds with it as soon as these settings close.
-        themeChoice.setOnClickListener(v -> ThemePicker.show(this, choices, () -> {
+        // BuzzTV: the background on its own (one picture, a section at random or all at random); nothing else moves.
+        themeChoice.setOnClickListener(v -> BackgroundPicker.show(this, choices, () -> {
             changed();
-            finish();
+            refresh();
         }));
-        wallpaperChoice = findViewById(R.id.wallpaperChoice);
-        wallpaperChoice.setOnClickListener(v -> showWallpaperPicker());
-        animationsChoice = findViewById(R.id.animationsChoice);
-        animationsChoice.setOnClickListener(v -> {
-            animations = !animations;
-            if (!animations) advancedEffects = false;
-            choices.edit().putBoolean("animations", animations)
-                    .putBoolean("advanced_effects", advancedEffects).apply();
+        wallpaperMotionChoice = findViewById(R.id.wallpaperMotionChoice);
+        wallpaperMotionChoice.setOnClickListener(v -> showAnimationPicker());
+        weatherLiveChoice = findViewById(R.id.weatherLiveChoice);
+        weatherLiveChoice.setOnClickListener(v -> {
+            choices.edit().putBoolean(Config.WEATHER_LIVE_KEY,
+                    !choices.getBoolean(Config.WEATHER_LIVE_KEY, false)).apply();
             changed();
             refresh();
         });
@@ -164,12 +187,17 @@ public final class LauncherSettingsActivity extends Activity {
             if (!hasOnTvChoices()) return;
             choices.edit().remove("columns").remove(Config.ROWS_BELOW_DOCK_KEY).remove("animations")
                     .remove("advanced_effects").remove(Config.WALLPAPER_CHOICE_KEY)
-                    .remove(Config.DOCK_OPACITY_KEY).remove(Config.CLOCK_FORMAT_KEY).remove(OpenOnStart.KEY).commit();
+                    .remove(Config.DOCK_OPACITY_KEY).remove(Config.CLOCK_FORMAT_KEY)
+                    .remove(Config.HOME_THEME_KEY).remove(Config.WALLPAPER_ROTATION_KEY)
+                    .remove(OpenOnStart.KEY).commit();
             Config current = Config.load(this);
             columns = current.columns;
             rowsBelowDock = current.rowsBelowDock;
             dockOpacity = current.dockOpacity;
             clockFormat = current.clockFormat;
+            homeTheme = current.homeTheme;
+            wallpaperRotationMinutes = current.wallpaperRotationMinutes > 0
+                    ? current.wallpaperRotationMinutes : BackgroundLibrary.DEFAULT_ROTATION_MINUTES;
             animations = current.animations;
             advancedEffects = current.animations && current.advancedEffects;
             changed();
@@ -188,42 +216,6 @@ public final class LauncherSettingsActivity extends Activity {
         LinearLayout row = (LinearLayout) views[0].getParent();
         row.removeAllViews();
         for (int i = views.length - 1; i >= 0; i--) row.addView(views[i]);
-    }
-
-    private void showWallpaperPicker() {
-        File dir = Config.dir(this);
-        List<File> images = new java.util.ArrayList<>(WallpaperRotation.images(
-                dir == null ? null : new File(dir, "wallpapers")));
-        // A theme with a single wallpaper.jpg offers that picture too (Config maps the choice back to it).
-        File single = dir == null ? null : new File(dir, Config.WALLPAPER_NAME);
-        if (single != null && single.isFile()) images.add(0, single);
-        String[] labels = new String[images.size() + 1];
-        for (int i = 0; i < images.size(); i++) labels[i] = images.get(i).getName();
-        labels[images.size()] = getString(R.string.wallpaper_none);
-        String current = choices.getString(Config.WALLPAPER_CHOICE_KEY, null);
-        int checked = "none".equals(current) ? images.size()
-                : indexOf(images, current);
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.wallpaper_label)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    dialog.dismiss();
-                    if (which == images.size()) {
-                        choices.edit().putString(Config.WALLPAPER_CHOICE_KEY, "none").apply();
-                    } else {
-                        choices.edit().putString(Config.WALLPAPER_CHOICE_KEY,
-                                images.get(which).getName()).apply();
-                    }
-                    changed();
-                    Toast.makeText(this, R.string.wallpaper_applied, Toast.LENGTH_SHORT).show();
-                    refresh();
-                })
-                .setNeutralButton(R.string.wallpaper_theme_default, (dialog, which) -> {
-                    choices.edit().remove(Config.WALLPAPER_CHOICE_KEY).apply();
-                    changed();
-                    refresh();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
     }
 
     /** Off, then every app with a TV entry point by name. Saved at once; it is read on the next boot. */
@@ -274,14 +266,6 @@ public final class LauncherSettingsActivity extends Activity {
         }
     }
 
-    private static int indexOf(List<File> images, String name) {
-        if (name == null) return -1;
-        for (int i = 0; i < images.size(); i++) {
-            if (images.get(i).getName().equals(name)) return i;
-        }
-        return -1;
-    }
-
     /**
      * A choice was saved. Home rebuilds when it next resumes because the change count moved, whether these
      * settings are left with Back or with the remote's Home button (which cancels the activity result).
@@ -312,27 +296,105 @@ public final class LauncherSettingsActivity extends Activity {
         for (int i = 0; i < clockChoices.length; i++) {
             clockChoices[i].setSelected(CLOCK_FORMATS[i].equals(clockFormat));
         }
-        animationsChoice.setText(getString(R.string.animations_state,
-                getString(animations ? R.string.on : R.string.off)));
+        for (int i = 0; i < rotationChoices.length; i++) {
+            rotationChoices[i].setSelected(wallpaperRotationMinutes == Config.WALLPAPER_ROTATION_CHOICES[i]);
+        }
+        homeThemeChoice.setText(getString(R.string.home_theme_state, getString(HomeTheme.labelRes(homeTheme))));
+        wallpaperMotionChoice.setText(getString(R.string.wallpaper_animation_state, animationLabel(wallpaperAnimation)));
+        weatherLiveChoice.setText(getString(R.string.weather_live_state, getString(
+                choices.getBoolean(Config.WEATHER_LIVE_KEY, false) ? R.string.on : R.string.off)));
         advancedChoice.setText(getString(R.string.advanced_effects_state,
                 getString(advancedEffects ? R.string.on : R.string.off)));
-        advancedChoice.setEnabled(animations);
-        advancedChoice.setAlpha(animations ? 1f : 0.5f);
-        themeChoice.setText(getString(R.string.theme_state, ThemePicker.state(this, choices)));
-        String wallpaperCurrent = choices.getString(Config.WALLPAPER_CHOICE_KEY, null);
-        wallpaperChoice.setText(getString(R.string.wallpaper_state,
-                "none".equals(wallpaperCurrent) ? getString(R.string.wallpaper_none)
-                        : wallpaperCurrent != null ? wallpaperCurrent
-                        : getString(R.string.wallpaper_theme_default)));
+        themeChoice.setText(getString(R.string.theme_state, BackgroundPicker.state(this, choices)));
         openOnStartChoice.setText(getString(R.string.open_on_start_state, openOnStartLabel()));
         followThemeChoice.setSelected(!hasOnTvChoices());
+    }
+
+    private void showHomeThemePicker() {
+        String[] labels = new String[HomeTheme.ALL.length];
+        int checked = 0;
+        for (int i = 0; i < HomeTheme.ALL.length; i++) {
+            labels[i] = getString(HomeTheme.labelRes(HomeTheme.ALL[i]));
+            if (HomeTheme.ALL[i].equals(homeTheme)) checked = i;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.home_theme_label)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    String picked = HomeTheme.ALL[which];
+                    if (picked.equals(homeTheme)) return;
+                    homeTheme = picked;
+                    choices.edit().putString(Config.HOME_THEME_KEY, picked).apply();
+                    changed();
+                    refresh();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private static final String[] ANIMATION_OPTIONS = {
+            Config.WALLPAPER_ANIMATION_NONE,
+            Config.WALLPAPER_ANIMATION_AUTO,
+            Config.WALLPAPER_ANIMATION_WEATHER,
+            WallpaperMotion.RAIN,
+            WallpaperMotion.STORM,
+            WallpaperMotion.SNOW,
+            WallpaperMotion.STARS,
+            WallpaperMotion.SUNBEAMS,
+            WallpaperMotion.CLOUDS,
+            WallpaperMotion.BUBBLES,
+            WallpaperMotion.FIREFLIES,
+            WallpaperMotion.MOTES
+    };
+
+    private void showAnimationPicker() {
+        String[] labels = new String[ANIMATION_OPTIONS.length];
+        int checked = 0;
+        for (int i = 0; i < ANIMATION_OPTIONS.length; i++) {
+            labels[i] = animationLabel(ANIMATION_OPTIONS[i]);
+            if (ANIMATION_OPTIONS[i].equals(wallpaperAnimation)) checked = i;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.wallpaper_animation_label)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    String picked = ANIMATION_OPTIONS[which];
+                    if (picked.equals(wallpaperAnimation) && choices.contains(Config.WALLPAPER_ANIMATION_KEY)) return;
+                    wallpaperAnimation = picked;
+                    choices.edit()
+                            .putString(Config.WALLPAPER_ANIMATION_KEY, picked)
+                            .putBoolean(Config.WALLPAPER_MOTION_KEY, Config.wallpaperAnimationEnabled(picked))
+                            .apply();
+                    changed();
+                    refresh();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private String animationLabel(String key) {
+        switch (key == null ? Config.WALLPAPER_ANIMATION_NONE : key) {
+            case Config.WALLPAPER_ANIMATION_AUTO: return getString(R.string.animation_auto);
+            case Config.WALLPAPER_ANIMATION_WEATHER: return getString(R.string.animation_weather);
+            case WallpaperMotion.RAIN: return getString(R.string.animation_rain);
+            case WallpaperMotion.STORM: return getString(R.string.animation_storm);
+            case WallpaperMotion.SNOW: return getString(R.string.animation_snow);
+            case WallpaperMotion.STARS: return getString(R.string.animation_stars);
+            case WallpaperMotion.SUNBEAMS: return getString(R.string.animation_sunbeams);
+            case WallpaperMotion.CLOUDS: return getString(R.string.animation_clouds);
+            case WallpaperMotion.BUBBLES: return getString(R.string.animation_bubbles);
+            case WallpaperMotion.FIREFLIES: return getString(R.string.animation_fireflies);
+            case WallpaperMotion.MOTES: return getString(R.string.animation_motes);
+            default: return getString(R.string.animation_none);
+        }
     }
 
     private boolean hasOnTvChoices() {
         return choices.contains("columns") || choices.contains(Config.ROWS_BELOW_DOCK_KEY)
                 || choices.contains("animations") || choices.contains("advanced_effects")
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
-                || choices.contains(Config.CLOCK_FORMAT_KEY) || choices.contains(OpenOnStart.KEY);
+                || choices.contains(Config.CLOCK_FORMAT_KEY) || choices.contains(Config.HOME_THEME_KEY)
+                || choices.contains(Config.WALLPAPER_ROTATION_KEY) || choices.contains(OpenOnStart.KEY);
     }
 
     private void open(Intent intent) {

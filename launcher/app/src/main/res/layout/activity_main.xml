@@ -157,6 +157,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/standardContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -282,6 +283,37 @@
                             android:fontFamily="@string/font_regular"
                             android:letterSpacing="0.14"
                             android:textAllCaps="true" />
+
+                        <!-- BuzzTV live weather row ("22° · Despejado · Buenos Aires"), shown when weather_live is on. -->
+                        <LinearLayout
+                            android:id="@+id/weatherRow"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+
+                            <com.gathin.tvhome.WeatherIconView
+                                android:id="@+id/weatherIcon"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:layout_marginEnd="7dp" />
+
+                            <TextView
+                                android:id="@+id/weatherText"
+                                android:gravity="left"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:singleLine="true"
+                                android:ellipsize="end"
+                                android:textColor="#E6FFFFFF"
+                                android:textSize="14sp"
+                                android:fontFamily="@string/font_regular"
+                                android:letterSpacing="0.04"
+                                android:includeFontPadding="false" />
+                        </LinearLayout>
 
                         <!-- Lunar date ("Lunar 13/9 · Year of the Horse"), shown when lunar_date is on. -->
                         <TextView

@@ -9,12 +9,25 @@ import static org.junit.Assert.assertTrue;
 public class WallpaperMotionTest {
     @Test public void effectsTheLauncherDrawsAreKept() {
         assertEquals("rain", WallpaperMotion.effect("rain"));
-        assertEquals("stars", WallpaperMotion.effect(" Stars "));
-        assertEquals("bubbles", WallpaperMotion.effect("BUBBLES"));
+        assertEquals("storm", WallpaperMotion.effect(" STORM "));
         assertEquals("snow", WallpaperMotion.effect("snow"));
+        assertEquals("stars", WallpaperMotion.effect(" Stars "));
+        assertEquals("sunbeams", WallpaperMotion.effect("SunBeams"));
+        assertEquals("clouds", WallpaperMotion.effect(" clouds "));
+        assertEquals("bubbles", WallpaperMotion.effect("BUBBLES"));
+        assertEquals("fireflies", WallpaperMotion.effect("FireFlies"));
+        assertEquals("motes", WallpaperMotion.effect("MOTES"));
         assertEquals("none", WallpaperMotion.effect("fireworks"));
         assertEquals("none", WallpaperMotion.effect(""));
         assertEquals("none", WallpaperMotion.effect(null));
+    }
+
+    @Test public void allEffectsListMatchesSupportedEffects() {
+        assertEquals(9, WallpaperMotion.ALL_EFFECTS.length);
+        for (String kind : WallpaperMotion.ALL_EFFECTS) {
+            assertEquals(kind, WallpaperMotion.effect(kind));
+            assertTrue(WallpaperMotion.wanted(0, kind));
+        }
     }
 
     @Test public void nothingMovesUnlessAThemeAsks() {
@@ -22,6 +35,10 @@ public class WallpaperMotionTest {
         assertFalse(WallpaperMotion.wanted(0, "lasers"));
         assertTrue(WallpaperMotion.wanted(3, "none"));
         assertTrue(WallpaperMotion.wanted(0, "rain"));
+        assertTrue(WallpaperMotion.wanted(0, "storm"));
+        assertTrue(WallpaperMotion.wanted(0, "sunbeams"));
+        assertTrue(WallpaperMotion.wanted(0, "clouds"));
+        assertTrue(WallpaperMotion.wanted(0, "fireflies"));
     }
 
     @Test public void motionStaysOffWhereItWouldCost() {
@@ -55,10 +72,11 @@ public class WallpaperMotionTest {
     }
 
     @Test public void eachEffectHasAFewDozenParticlesAtMost() {
-        for (String kind : new String[]{"rain", "snow", "bubbles", "stars"}) {
+        for (String kind : WallpaperMotion.ALL_EFFECTS) {
             int n = WallpaperEffectView.count(kind);
             assertTrue(kind, n > 0 && n <= 80);
         }
         assertEquals(0, WallpaperEffectView.count("none"));
+        assertEquals(0, WallpaperEffectView.count("unknown"));
     }
 }

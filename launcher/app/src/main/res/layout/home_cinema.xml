@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cinemaRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/cinema_scrim"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="56dp"
+        android:paddingEnd="56dp"
+        android:paddingTop="32dp"
+        android:paddingBottom="34dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <!-- Top bar: "Cine en casa" left, live weather + clock right -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/cinemaBrand"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:text="@string/home_theme_cinema"
+                android:textColor="#FFF6EFE2"
+                android:textSize="22sp"
+                android:fontFamily="@string/font_medium"
+                android:letterSpacing="0.01" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/cinemaWeatherRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="20dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <com.gathin.tvhome.WeatherIconView
+                        android:id="@+id/cinemaWeatherIcon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="7dp" />
+
+                    <TextView
+                        android:id="@+id/cinemaWeatherText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:singleLine="true"
+                        android:textColor="#CCF6EFE2"
+                        android:textSize="15sp"
+                        android:fontFamily="@string/font_regular" />
+                </LinearLayout>
+
+                <TextClock
+                    android:id="@+id/cinemaClock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:format12Hour="h:mm"
+                    android:format24Hour="HH:mm"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="26sp"
+                    android:fontFamily="@string/font_medium"
+                    android:fontFeatureSettings="tnum" />
+            </LinearLayout>
+        </RelativeLayout>
+
+        <!-- Middle-left Hero Stage -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <TextView
+                android:id="@+id/cinemaHeroTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="580dp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:text="@string/home_theme_cinema"
+                android:textColor="#FFF6D58E"
+                android:textSize="52sp"
+                android:textStyle="bold"
+                android:letterSpacing="-0.02"
+                android:includeFontPadding="false"
+                android:shadowColor="#CC000000"
+                android:shadowDy="3"
+                android:shadowRadius="12" />
+
+            <TextView
+                android:id="@+id/cinemaHeroSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:singleLine="true"
+                android:text="@string/cinema_subtitle"
+                android:textColor="#CCB8C4D4"
+                android:textSize="16sp"
+                android:fontFamily="@string/font_regular" />
+
+            <!-- Primary & Secondary Pill Actions -->
+            <LinearLayout
+                android:id="@+id/cinemaActions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clipChildren="false"
+                android:clipToPadding="false">
+
+                <TextView
+                    android:id="@+id/cinemaBtnPlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="46dp"
+                    android:background="@drawable/cinema_btn_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minWidth="148dp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:text="@string/cinema_open"
+                    android:textColor="#FF12161E"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:nextFocusRight="@+id/cinemaBtnInputs"
+                    android:nextFocusDown="@+id/cinemaCardsRow" />
+
+                <TextView
+                    android:id="@+id/cinemaBtnInputs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="14dp"
+                    android:background="@drawable/cinema_btn_secondary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingStart="22dp"
+                    android:paddingEnd="22dp"
+                    android:text="@string/inputs"
+                    android:textColor="#FFF2F4F8"
+                    android:textSize="15sp"
+                    android:fontFamily="@string/font_medium"
+                    android:nextFocusLeft="@+id/cinemaBtnPlay"
+                    android:nextFocusRight="@+id/cinemaBtnSettings"
+                    android:nextFocusDown="@+id/cinemaCardsRow" />
+
+                <ImageButton
+                    android:id="@+id/cinemaBtnSettings"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="14dp"
+                    android:background="@drawable/cinema_btn_secondary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="@string/settings"
+                    android:src="@drawable/ic_settings"
+                    android:tint="#FFF2F4F8"
+                    android:scaleType="center"
+                    android:nextFocusLeft="@+id/cinemaBtnInputs"
+                    android:nextFocusDown="@+id/cinemaCardsRow" />
+            </LinearLayout>
+
+            <!-- Sleek warm-gold accent bar -->
+            <FrameLayout
+                android:layout_width="360dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="24dp"
+                android:background="#33FFFFFF">
+
+                <View
+                    android:layout_width="160dp"
+                    android:layout_height="match_parent"
+                    android:background="#FFF6D58E" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Bottom row: 4 large spacious dark frosted cards (horizontally scrollable) -->
+        <HorizontalScrollView
+            android:id="@+id/cinemaCardsScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/cinemaCardsRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                android:paddingTop="8dp"
+                android:paddingBottom="4dp" />
+        </HorizontalScrollView>
+    </LinearLayout>
+</FrameLayout>

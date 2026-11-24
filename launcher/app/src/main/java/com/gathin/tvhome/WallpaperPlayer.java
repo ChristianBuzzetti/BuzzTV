@@ -61,6 +61,11 @@ final class WallpaperPlayer {
     /** wallpaper_moods: the collection's groups by time of day; empty rotates through all of it. */
     private final Map<String, Set<String>> moods;
     /** wallpaper_drift and wallpaper_effect; null when the theme asks for neither or this TV may not move. */
+    private final Context context;
+    private final int baseDrift;
+    private final boolean motionAllowed;
+    private WallpaperEffectView effectView;
+    private String currentEffect = WallpaperMotion.NONE;
     private WallpaperMotion motion;
     /** config.xml latitude and longitude for the sun's times, and today's {sunrise, sunset} once worked out. */
     private final String latitude, longitude;
@@ -68,7 +73,12 @@ final class WallpaperPlayer {
     private int[] sun;
 
     WallpaperPlayer(Context context, FrameLayout root, Config config) {
+        this.context = context;
         this.root = root;
+        this.baseDrift = config.wallpaperDrift;
+        ActivityManager am = context.getSystemService(ActivityManager.class);
+        boolean lowRam = am != null && am.isLowRamDevice();
+        this.motionAllowed = WallpaperMotion.allowed(true, config.reducedMotion, lowRam);
         backgroundColor = config.backgroundColor;
         files = new ArrayList<>(config.wallpapers);
         interval = config.wallpaperRotationMinutes * 60_000L;
@@ -100,23 +110,48 @@ final class WallpaperPlayer {
             root.addView(image, 0, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             showFirst();
-            setUpMotion(context, config);
+            setUpMotion(config);
         }
     }
 
-    /** Off unless the theme asks for it, and never with animations off, reduced_motion or on a low-RAM device. */
-    private void setUpMotion(Context context, Config config) {
+    /**
+     * Off unless Animated background is on (Config hands over no drift or effect otherwise), and never with
+     * reduced_motion or on a low-RAM device. BuzzTV: the interface's Animations switch no longer stops it.
+     */
+    private void setUpMotion(Config config) {
+        if (!motionAllowed) return;
         if (!WallpaperMotion.wanted(config.wallpaperDrift, config.wallpaperEffect)) return;
-        ActivityManager am = context.getSystemService(ActivityManager.class);
-        boolean lowRam = am != null && am.isLowRamDevice();
-        if (!WallpaperMotion.allowed(config.animations, config.reducedMotion, lowRam)) return;
-        WallpaperEffectView effect = null;
-        if (!WallpaperMotion.NONE.equals(config.wallpaperEffect)) {
-            effect = new WallpaperEffectView(context, config.wallpaperEffect);
-            root.addView(effect, 1, new FrameLayout.LayoutParams(
+        applyEffect(config.wallpaperEffect);
+    }
+
+    /** Replaces the active particle effect with the live weather's effect while Home is running. */
+    void setWeatherEffect(String effect) {
+        if (closed || !motionAllowed) return;
+        String next = WallpaperMotion.effect(effect);
+        if (next.equals(currentEffect) && (motion != null || !WallpaperMotion.wanted(baseDrift, next))) return;
+        applyEffect(next);
+    }
+
+    private void applyEffect(String effect) {
+        String valid = WallpaperMotion.effect(effect);
+        if (motion != null) {
+            motion.stop();
+            motion = null;
+        }
+        if (effectView != null) {
+            root.removeView(effectView);
+            effectView = null;
+        }
+        currentEffect = valid;
+        if (!WallpaperMotion.wanted(baseDrift, valid)) return;
+        if (!WallpaperMotion.NONE.equals(valid)) {
+            effectView = new WallpaperEffectView(context, valid);
+            int idx = root.indexOfChild(image);
+            root.addView(effectView, idx >= 0 ? idx + 1 : 0, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
-        motion = new WallpaperMotion(image, effect, config.wallpaperDrift);
+        motion = new WallpaperMotion(image, effectView, baseDrift);
+        if (active) motion.start();
     }
 
     /**

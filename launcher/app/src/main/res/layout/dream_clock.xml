@@ -61,5 +61,35 @@
             android:fontFamily="@string/font_regular"
             android:letterSpacing="0.14"
             android:textAllCaps="true" />
+
+        <!-- Live weather ("22° · Despejado · Buenos Aires"), shown when weather_live is on. -->
+        <LinearLayout
+            android:id="@+id/dreamWeatherRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <com.gathin.tvhome.WeatherIconView
+                android:id="@+id/dreamWeatherIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="9dp" />
+
+            <TextView
+                android:id="@+id/dreamWeatherText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textColor="#CCFFFFFF"
+                android:textSize="18sp"
+                android:fontFamily="@string/font_light"
+                android:letterSpacing="0.04"
+                android:includeFontPadding="false" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>

@@ -14,5 +14,6 @@
   "fade_rows": true,
   "icon_only_buttons": true,
   "clock_wallpaper": true,
-  "clock_wallpaper_dim": 40
+  "clock_wallpaper_dim": 40,
+  "wallpaper_effect": "stars"
 }

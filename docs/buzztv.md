@@ -17,19 +17,47 @@ un **selector de temas en la TV**, para cambiar de tema con el control remoto si
   [`atardecer/`](../themes/atardecer/), [`mesh/`](../themes/mesh/), [`cosmos/`](../themes/cosmos/),
   [`neotokyo/`](../themes/neotokyo/), [`oceano/`](../themes/oceano/) y [`patagonia/`](../themes/patagonia/).
 
-## Fondos animados
+## Diseños / Temas de inicio
 
-Dos claves nuevas para un tema, apagadas por defecto:
+Independiente del **Fondo** elegido, Configuración del launcher incluye **Diseño / Tema** (`home_theme`, por
+defecto `standard` / Estándar), con 5 diseños listos para cualquier fondo:
 
-- `"wallpaper_drift": 0-10`: el fondo hace un zoom y un paneo lentos (ida y vuelta en un minuto), en el
-  porcentaje indicado. Mueve la imagen entera sin redibujarla.
-- `"wallpaper_effect"`: una capa liviana de partículas sobre el fondo: `rain` (lluvia), `snow` (nieve),
-  `bubbles` (burbujas) o `stars` (estrellas que titilan y alguna fugaz).
+- **Estándar (`standard`)**: el diseño clásico tipo Apple TV.
+- **Cine en casa (`cinema`)**: encabezado limpio, título grande en dorado cálido (`#F6D58E`) sobre el dock y
+  foco con brillo dorado.
+- **Sala (`bento`)**: reloj grande y fino (`68sp`), fecha y clima dentro de una tarjeta translúcida en la
+  esquina superior izquierda, con borde de foco ámbar (`#F5B963`).
+- **Modo Juego (`gaming`)**: encabezado HUD en mayúsculas, estética oscura de alto contraste y foco verde
+  esmeralda (`#4ADE80`) con esquinas más marcadas.
+- **Minimalista (`minimal`)**: reloj, fecha y clima centrados arriba, botones de iconos compactos y dock
+  flotante transparente con foco blanco fino.
+
+## Fondos animados y rotación
+
+Dos claves para cada fondo/tema y dos controles directos en Configuración del launcher:
+
+- **Animación de fondo (`wallpaper_animation`)**: selector con **Desactivada**, **Según fondo**, **Según clima**
+  (adaptado al clima real vía `LiveWeather`), o cualquiera de los 9 efectos livianos: `rain` (lluvia),
+  `storm` (tormenta con relámpagos suaves), `snow` (nieve), `stars` (estrellas y fugaces), `sunbeams`
+  (rayos de sol), `clouds` (nubes), `bubbles` (burbujas), `fireflies` (luciérnagas) y `motes` (partículas).
+  Mantiene compatibilidad hacia atrás con `wallpaper_motion`.
+- **Rotación de fondo (`wallpaper_rotation_minutes`)**: chips directos (`1 min`, `5 min`, `10 min`, `20 min`,
+  `1 h`) que ajustan el intervalo de cambio cuando se usa un fondo rotativo.
 
 Solo se animan con Home al frente, a 20–30 cuadros por segundo como máximo, y se frenan al abrir una app, con
-el protector de pantalla o al apagar la TV. No corren con "Animaciones" apagado en Ajustes del launcher, con
-`reduced_motion`, ni en TVs que Android marca como de poca RAM. Los temas nuevos ya las traen: `neotokyo`
-(lluvia), `cosmos`, `gamer` y `synthwave` (estrellas), `oceano` (burbujas) y el zoom lento en los demás.
+el protector de pantalla o al apagar la TV. No corren con `reduced_motion` ni en TVs que Android marca como de poca RAM.
+
+## Clima en vivo
+
+La opción **Clima en vivo** (apagada por defecto, en Configuración del launcher) muestra la temperatura, la
+condición y la ciudad junto a la hora en Inicio y en el protector de pantalla (reloj). Cuando **Animación de
+fondo** está en **Según clima**, el clima real elige automáticamente el efecto (`storm`, `rain`, `snow`,
+`clouds`, `sunbeams` o `stars`).
+
+El launcher sigue sin permiso `INTERNET`. Los datos los provee el add-on liviano [`addons/weather-sync/`](../addons/weather-sync/),
+que detecta automáticamente la ciudad aproximada por IP (`get.geojs.io` / `ipwho.is`), consulta
+[Open-Meteo](https://open-meteo.com/) sin clave y expone el resultado por `content://com.buzztv.weathersync/current`
+sin servicios en segundo plano.
 
 ## Uso
 
@@ -69,7 +97,7 @@ memoria que cualquier otro tema con una sola imagen. El APK crece unos 10 KB en 
 | Pieza | Archivo |
 |---|---|
 | Listar, aplicar, restablecer y borrar temas de la biblioteca | `launcher/app/src/main/java/com/gathin/tvhome/ThemeLibrary.java` |
-| El selector (diálogo con miniaturas) | `launcher/app/src/main/java/com/gathin/tvhome/ThemePicker.java` |
+| El selector de fondo (todos al azar, una sección al azar o una imagen) | `launcher/app/src/main/java/com/gathin/tvhome/BackgroundPicker.java`, `BackgroundLibrary.java` |
 | Escritura por el provider en `themes/<nombre>/` (firmware que bloquea Android/data) | `ThemeFiles.java`, `ThemeProvider.java` |
 | Carga desde la computadora | `tools/themes.sh`, `tools/themes.ps1` |
 | Pruebas | `launcher/app/src/test/.../ThemeLibraryTest.java`, `ThemeFilesTest.java`, `tests/test_themes_library.py` |

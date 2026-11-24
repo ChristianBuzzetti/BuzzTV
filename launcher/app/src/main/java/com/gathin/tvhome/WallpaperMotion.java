@@ -19,9 +19,17 @@ import java.util.Locale;
 final class WallpaperMotion {
     static final String NONE = "none";
     static final String RAIN = "rain";
+    static final String STORM = "storm";
     static final String SNOW = "snow";
-    static final String BUBBLES = "bubbles";
     static final String STARS = "stars";
+    static final String SUNBEAMS = "sunbeams";
+    static final String CLOUDS = "clouds";
+    static final String BUBBLES = "bubbles";
+    static final String FIREFLIES = "fireflies";
+    static final String MOTES = "motes";
+    static final String[] ALL_EFFECTS = {
+            RAIN, STORM, SNOW, STARS, SUNBEAMS, CLOUDS, BUBBLES, FIREFLIES, MOTES
+    };
     /** One full sway of the drift, there and back. */
     static final long DRIFT_PERIOD_MS = 60_000L;
     static final long DRIFT_FRAME_MS = 50L;
@@ -48,8 +56,18 @@ final class WallpaperMotion {
     static String effect(String raw) {
         String v = raw == null ? NONE : raw.trim().toLowerCase(Locale.ROOT);
         switch (v) {
-            case RAIN: case SNOW: case BUBBLES: case STARS: return v;
-            default: return NONE;
+            case RAIN:
+            case STORM:
+            case SNOW:
+            case STARS:
+            case SUNBEAMS:
+            case CLOUDS:
+            case BUBBLES:
+            case FIREFLIES:
+            case MOTES:
+                return v;
+            default:
+                return NONE;
         }
     }
 
