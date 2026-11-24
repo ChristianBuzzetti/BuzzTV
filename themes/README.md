@@ -71,6 +71,11 @@ updated. Add-ons with custom shell installers still need Bash; this native Windo
 | `twilight/` | Three original anime landscape wallpapers in `wallpapers/` (Mount Fuji twilight, seaside coastal train, ancient stone arch), rotating with caption under the buttons; frosted-glass dock at 60% opacity, ambient glow disabled so the artwork stays calm. See `twilight/CREDITS.md` | <img src="twilight/screenshot.jpg" width="320" alt="twilight theme"> |
 | `onyx/` | Deep `#0E0F12` OLED dark canvas with no wallpaper, greeting, or ambient glow; a 5-column dock with no band or title, rim-only focus highlight (`glass_style: rim`), no focus overshoot, icon-only top buttons, and the app library enabled. By [@socmarin](https://github.com/socmarin) | <img src="onyx/screenshot.jpg" width="320" alt="onyx theme"> |
 | `orba/` | The look of [Orba](https://github.com/btalal/orba), an OLED-friendly launcher: a midnight-blue wallpaper with cyan-to-violet light waves along the bottom edge, drawn in code, five floating tiles with no dock band, title or greeting, the focus glowing in each app's own colour with a soft halo and no overshoot, icon-only top buttons, rows that fade under the clock, and the clock over the waves after ten idle minutes | <img src="orba/screenshot.jpg" width="320" alt="orba theme"> |
+| `gamer/` | A neon gaming HUD drawn in code: a cyan-to-magenta portal ring with a controller inside, a hexagon wall and a grid floor; six tiles in a frosted-glass dock with a rim-only focus that glows in the app's colour, icon-only buttons, no greeting, and the clock over the picture after five idle minutes. The wallpaper is CC0, not MIT: see `gamer/CREDITS.md` | <img src="gamer/screenshot.jpg" width="320" alt="gamer theme"> |
+| `cine/` | A classic cinema stage drawn in code: red velvet curtains, a gold-edged valance, two spotlights and a row of seats; five tiles in a frosted-glass dock with a soft halo focus, icon-only buttons and the clock over the stage after five idle minutes. The wallpaper is CC0, not MIT: see `cine/CREDITS.md` | <img src="cine/screenshot.jpg" width="320" alt="cine theme"> |
+| `synthwave/` | An 80s synthwave sunset drawn in code: a striped sun over neon wireframe mountains and palms with a pink grid floor; six floating tiles with no dock band, a halo focus in each app's colour and icon-only buttons. The wallpaper is CC0, not MIT: see `synthwave/CREDITS.md` | <img src="synthwave/screenshot.jpg" width="320" alt="synthwave theme"> |
+| `estadio/` | A football stadium at night drawn in code: floodlights over full stands and a striped pitch; six tiles in a frosted-glass dock, icon-only buttons and no app-colour glow. The wallpaper is CC0, not MIT: see `estadio/CREDITS.md` | <img src="estadio/screenshot.jpg" width="320" alt="estadio theme"> |
+| `atardecer/` | Dusk over layered mountain ridges drawn in code, with a low sun under a violet sky; a light 40% frosted-glass dock, six tiles, the focus glowing in the app's colour and icon-only buttons. The wallpaper is CC0, not MIT: see `atardecer/CREDITS.md` | <img src="atardecer/screenshot.jpg" width="320" alt="atardecer theme"> |
 
 Every theme folder has a `screenshot.jpg` of Home with that theme on a real TV. `tools/theme.sh` never
 pushes it; it is only here so you can see a theme before you try it.
@@ -289,6 +294,13 @@ That evening peak is a fixed reference day, sunrise 07:30 and sunset 19:00 on th
 launcher follows the real sun only when `latitude` and `longitude` are set in
 `launcher/app/src/main/res/values/config.xml`, which is a build setting a theme cannot carry: see
 [docs/sky.md](../docs/sky.md) for the two lines and what still falls back.
+
+## Several themes on the TV
+
+`tools/themes.sh` (Windows: `tools\themes.ps1`) keeps several theme folders on the TV without applying any:
+`tools/themes.sh themes/gamer themes/cine`, or `--all` for every folder here. Launcher settings then has a
+Theme row that lists them with their `screenshot.jpg` and applies the one picked, or goes back to Original.
+`--list` and `--remove <name>` manage what the TV holds. See [docs/buzztv.md](../docs/buzztv.md).
 
 ## Adding a theme
 
