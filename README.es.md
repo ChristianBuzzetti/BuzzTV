@@ -1,3 +1,5 @@
+> **BuzzTV** es un fork de CleanYourTV que agrega un selector de temas en la TV y cinco temas nuevos. Qué cambió: [docs/buzztv.md](docs/buzztv.md).
+
 <p align="center">
   <a href="https://cleanyour.tv"><img src="https://raw.githubusercontent.com/Gathin23/cleanyourtv/main/docs/banner.png" alt="CleanYourTV. Tu televisor, sin anuncios. Elimina las aplicaciones innecesarias de cualquier Android TV o Google TV por Wi-Fi y reemplaza la pantalla de inicio llena de anuncios por un launcher limpio con aspecto de Apple TV. Sin root, sin cables, sin desinstalar nada y con restauración en una sola línea." width="800"></a>
 </p>
@@ -219,7 +221,7 @@ Una pantalla de inicio nativa y muy ligera para Android TV: **unos 572 KB**, pro
 |---|---|
 | **Configuración** | Orden del dock, aplicaciones ocultas, app de TV en directo, de 4 a 7 elementos por fila y animaciones reducidas. Todo definido en [`config.xml`](launcher/app/src/main/res/values/config.xml). |
 | **Ajustes en el televisor** | Mantén OK pulsado en Ajustes para acceder a las opciones del launcher. Opcionalmente, `launcher_settings_button` permite que una pulsación simple las abra directamente; la configuración del televisor continúa accesible desde la propia página de ajustes y mediante el icono correspondiente. |
-| **Temas** | Fondo, fondo de pantalla y diseño definidos en un `config.json` enviado por Wi-Fi, sin recompilar. 33 temas están incluidos en [`themes/`](themes/), incluyendo el `default/` integrado. |
+| **Temas** | Fondo, fondo de pantalla y diseño definidos en un `config.json` enviado por Wi-Fi, sin recompilar. 38 temas están incluidos en [`themes/`](themes/), incluyendo el `default/` integrado. |
 | **31 idiomas** | Sigue el idioma del televisor, con un diseño totalmente reflejado de derecha a izquierda en hebreo. |
 | **Biblioteca de aplicaciones** | Opcional: permite explorar todas las aplicaciones instaladas y agregar o retirar accesos directos de la pantalla de inicio. Consulta [la guía de la biblioteca de aplicaciones](docs/app-library.md). |
 | **Menú contextual de elementos** | Habilitado por defecto (`tile_menu`): mantén OK pulsado sobre un elemento para acceder a Mover, Quitar de la pantalla de inicio e Información de la app. Si se desactiva, mantener OK pulsado abre Información de la app directamente. |
