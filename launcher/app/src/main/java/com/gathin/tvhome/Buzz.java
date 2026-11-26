@@ -11,7 +11,12 @@ import android.text.format.DateFormat;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
+import android.graphics.Outline;
+import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextClock;
 import android.widget.TextView;
 
@@ -199,6 +204,124 @@ final class Buzz {
         v.setFocusable(false);
         v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         return v;
+    }
+
+
+    /** Clips a view to a rounded rectangle (hardware-accelerated, so the clip is free while it animates). */
+    static void roundClip(View v, float radiusPx) {
+        v.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline o) {
+                o.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radiusPx);
+            }
+        });
+        v.setClipToOutline(true);
+    }
+
+    /**
+     * An app card: the banner edge to edge, or the icon on a glass tinted with the app's colour and its name
+     * under it; {@code e == null} makes the All apps card. White ring when focused. Not yet listening to focus:
+     * the layout adds its own lift.
+     */
+    static FrameLayout appCard(Context c, AppAdapter.Entry e, int accent, float radiusDp, boolean preferIcon) {
+        FrameLayout card = new FrameLayout(c);
+        card.setId(View.generateViewId());
+        card.setFocusable(true);
+        card.setClickable(true);
+        float r = dp(c, radiusDp);
+        roundClip(card, r);
+        String label = e == null ? c.getString(R.string.all_apps_short) : e.label;
+        if (e != null && e.banner != null && !preferIcon) {
+            ImageView art = new ImageView(c);
+            art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            art.setImageDrawable(art(e));
+            card.addView(art, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        } else {
+            card.setBackground(new android.graphics.drawable.GradientDrawable(
+                    android.graphics.drawable.GradientDrawable.Orientation.TL_BR, new int[]{
+                    blend(accent, 0xFF0A0D14, 0.55f), blend(accent, 0xFF0A0D14, 0.84f)}));
+            LinearLayout col = new LinearLayout(c);
+            col.setOrientation(LinearLayout.VERTICAL);
+            col.setGravity(Gravity.CENTER);
+            ImageView icon = new ImageView(c);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            icon.setImageDrawable(e == null ? c.getDrawable(R.drawable.ic_apps) : iconArt(e));
+            col.addView(icon, new LinearLayout.LayoutParams(dp(c, 40), dp(c, 40)));
+            TextView name = text(c, 13, TEXT, R.string.font_medium);
+            name.setText(label);
+            name.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            np.topMargin = dp(c, 8);
+            np.leftMargin = np.rightMargin = dp(c, 8);
+            col.addView(name, np);
+            card.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        card.setForeground(states(round(0, r, Math.max(1, dp(c, 1)), 0x1FFFFFFF), round(0, r, dp(c, 3), TEXT)));
+        card.setContentDescription(label);
+        card.setTag(e == null ? null : e.component.flattenToString());
+        card.setTag(R.id.homeLabel, label);
+        card.setTag(R.id.homeAccent, accent);
+        return card;
+    }
+
+    /** A pill button: white and dark text when {@code primary}, glass otherwise; white ring on focus. */
+    static TextView pill(Context c, int label, boolean primary) {
+        TextView b = text(c, 17, primary ? 0xFF070A11 : TEXT, R.string.font_medium);
+        b.setText(label);
+        b.setGravity(Gravity.CENTER);
+        b.setFocusable(true);
+        b.setClickable(true);
+        int padH = dp(c, 24);
+        b.setPadding(padH, 0, padH, 0);
+        float r = dp(c, 24);
+        b.setBackground(primary
+                ? states(round(0xE6F7F8FA, r, 0, 0), round(0xFFFFFFFF, r, dp(c, 3), HONEY))
+                : states(round(0x8C101420, r, Math.max(1, dp(c, 1)), 0x47FFFFFF), round(0x40FFFFFF, r, dp(c, 2), TEXT)));
+        lift(b, 1.06f, null);
+        return b;
+    }
+
+    /** A remote-key hint: a keycap and what it does. */
+    static View keyHint(Context c, String key, int label) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        TextView cap = text(c, 12, TEXT, R.string.font_medium);
+        cap.setText(key);
+        cap.setGravity(Gravity.CENTER);
+        cap.setMinWidth(dp(c, 28));
+        cap.setPadding(dp(c, 7), dp(c, 4), dp(c, 7), dp(c, 5));
+        android.graphics.drawable.GradientDrawable g = round(0x1AFFFFFF, dp(c, 7), Math.max(1, dp(c, 1)), 0x33FFFFFF);
+        cap.setBackground(g);
+        row.addView(cap);
+        TextView t = text(c, 15, TEXT_2, R.string.font_regular);
+        t.setText(label);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMarginStart(dp(c, 9));
+        lp.setMarginEnd(dp(c, 24));
+        row.addView(t, lp);
+        return row;
+    }
+
+    /** A small caps section label ("PERSONALIZAR"). */
+    static TextView kicker(Context c, int label, int color) {
+        TextView t = text(c, 14, color, R.string.font_medium);
+        t.setText(label);
+        t.setAllCaps(true);
+        t.setLetterSpacing(0.2f);
+        return t;
+    }
+
+    /** "buzz" + "tv" in the accent: the BuzzTV wordmark. */
+    static CharSequence wordmark(String first, int accent) {
+        android.text.SpannableString s = new android.text.SpannableString(first + "tv");
+        s.setSpan(new android.text.style.ForegroundColorSpan(accent | 0xFF000000), first.length(), first.length() + 2,
+                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return s;
     }
 
     static void center(TextView t) {

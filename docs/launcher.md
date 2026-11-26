@@ -48,29 +48,31 @@ Click **Settings** for the TV's own settings. Hold OK on it for its menu:
 - **Restart…** while `HomeKeyService` runs, which opens the system power menu (a launcher may not
   restart the TV itself).
 
-The launcher's own page has these rows, top to bottom:
+BuzzTV's settings (4.0) open on a hub: the current Home as a live miniature on the left, the categories as cards
+on the right. Every change is saved at once and Home rebuilds when it comes back. **Personalize**:
 
-- **Reorder apps**, only with `launcher_settings_button`, the same as the menu's.
-- **Apps per row** 4, 5, 6 or 7; **Rows below dock** 0 to 3, how many rows of tiles stay visible under the
-  dock band; **Dock band opacity** 100%, 70%, 50% or 30%. The last two only do anything while the dock is
-  its own row (`dock_row`, on by default).
-- **Clock**: **System** follows the TV's 12- or 24-hour setting; **12-hour** or **24-hour** sets the launcher's
-  clocks (Home and the clock screensaver) to that, whatever the TV uses (`clock_format` in a theme).
-- **Background** (BuzzTV): **All, at random**, or a section of the on-TV library (`tools/themes.sh`; Christmas,
-  Patagonia, ...) and then that section **at random** or one of its pictures. There is no "none": a background
-  always has a picture. The choice is the background alone, read straight from the library: the dock, buttons,
-  columns and every other choice stay as they are. A random background changes every 20 minutes (or its
-  section's `wallpaper_rotation_minutes`); captions never show.
-- **Animated background** (BuzzTV), off until switched on: every background then zooms slowly, and the ones with a
-  `wallpaper_effect` add rain, snow, bubbles or stars. There is no separate Animations row any more.
-- **Rows below dock 0** (BuzzTV) shows nothing under the dock band; the rows fade in as soon as Down leaves it.
-- **Advanced effects** (tile lift, icon zoom and smooth ambient-colour transitions; they may use more memory).
-- **Open on start**, only with `open_on_start_choice`: Off, or an app that opens instead of Home the first
-  time Home comes up after the TV starts. Once per boot, so Home and Back still reach the launcher.
-- **Follow theme (reset on-TV choices)**, which clears every choice above. Pushing or resetting a theme
-  clears them too.
-- **Choose default home** opens Android's home picker, and **TV system settings** the TV's own settings
-  page.
+- **Home layout**: a large live preview of the real layout, with the TV's own apps and wallpaper, over a carousel
+  of the seven layouts (Marquee, Aura, Panel, Orbit, Mosaic, Living Room, Classic); moving along the carousel
+  changes the preview. Beside it: the **Accent colour** (from the focused app, or a fixed one), **Density**
+  (comfortable or compact), **Show greeting** and the **Inputs row (HDMI)**. **Use this layout** saves; Back
+  leaves without changes.
+- **Background**: a gallery of the on-TV library (`tools/themes.sh`) with a chip per section. OK on a picture
+  keeps it; or a section at random, or everything at random, changing every 1, 5, 10 or 20 minutes or 1 hour.
+  Pictures are always shown whole: one of another shape is framed on a soft wash of its own colours.
+- **Background animation**: one animation over every background (Off, Match weather, or one of nine effects).
+- **Weather**: **Live weather**, which needs the Weather Sync add-on, and **See the 7-day forecast**.
+
+**Home and system**:
+
+- **Apps on Home**: **Reorder apps**, then for the Classic layout **Apps per row** 4, 5, 6 or 7, **Rows below
+  dock** 0 to 3 and **Dock band opacity** 100%, 70%, 50% or 30%, and **Advanced effects** (tile lift, icon zoom
+  and smooth ambient-colour transitions; they may use more memory).
+- **Clock and date**: **Clock format** follows the TV (System) or is always 12 or 24 hours (`clock_format` in a
+  theme), and **Show greeting**.
+- **Default Home**: **Choose default home** opens Android's home picker; **Open on start**, only with
+  `open_on_start_choice`, opens an app instead of Home the first time after the TV starts; **Follow theme (reset
+  on-TV choices)** clears the on-TV choices. Pushing or resetting a theme clears them too.
+- **TV settings** opens the TV's own settings.
 
 **Change the default home:** Launcher settings and the optional Default-home tile
 (`show_home_settings_shortcut`) open Android's home picker. Choose the original launcher to stop using

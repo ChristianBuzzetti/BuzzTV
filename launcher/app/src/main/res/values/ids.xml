@@ -3,4 +3,5 @@
     <!-- Tags on the custom Home layouts' cards: the app's name and its accent colour. -->
     <item name="homeLabel" type="id" />
     <item name="homeAccent" type="id" />
+    <item name="homeEntry" type="id" />
 </resources>

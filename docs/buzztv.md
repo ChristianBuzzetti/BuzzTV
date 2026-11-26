@@ -17,27 +17,33 @@ un **selector de temas en la TV**, para cambiar de tema con el control remoto si
   [`atardecer/`](../themes/atardecer/), [`mesh/`](../themes/mesh/), [`cosmos/`](../themes/cosmos/),
   [`neotokyo/`](../themes/neotokyo/), [`oceano/`](../themes/oceano/) y [`patagonia/`](../themes/patagonia/).
 
-## Diseños / Temas de inicio
+## Diseños de inicio
 
-Independiente del **Fondo** elegido, Configuración del launcher incluye **Diseño / Tema** (`home_theme`). BuzzTV
-abre en **Aura**; los seis diseños comparten un mismo kit visual (`Buzz.java`: colores, tipografía Outfit, foco
-con elevación y borde, chip de clima) y todos llevan el clima clickeable con pronóstico de 7 días.
+En **Ajustes → Diseño de Inicio** (`home_theme`) hay siete diseños, todos sobre el mismo kit visual (`Buzz.java`) y
+con el clima clickeable. La pantalla muestra una **vista previa en vivo**: el diseño real, construido con las apps
+y el fondo de la TV y achicado (`LayoutPreview`). Por defecto, **Marquesina**.
 
-- **Aura (`aura`, por defecto)**: reloj grande y fino con saludo, fecha y clima; una fila de tarjetas de apps
-  abajo. El color de la pantalla se adapta a la app enfocada: un aura suave sube detrás de la fila con el color
-  de esa app y la sigue a lo largo de la fila. Botones redondos arriba a la derecha (Entradas, Wi-Fi, Todas las
-  apps, Configuración; mantener OK en Configuración abre los ajustes del launcher).
-- **Arena (`gaming`, juegos)**: HUD arriba (hora, clima, fecha), fila de íconos cuadrados con foco neón cian, el
-  nombre de la app enfocada en tipografía enorme y haces de luz diagonales que toman su color. Barra inferior
-  con **Consolas / HDMI**, **Biblioteca** y **Ajustes**.
-- **Zen (`minimal`, minimalista)**: solo tipografía sobre el fondo. Reloj enorme abajo a la izquierda con fecha
-  y clima; las apps son una columna de nombres a la derecha, atenuados hasta que se enfocan (se iluminan,
-  avanzan y muestran su ícono). Entradas y Ajustes son dos palabras arriba.
-- **Sala (`bento`)** y **Cine en casa (`cinema`)**: como antes, con el clima clickeable.
-- **Estándar (`standard`)**: el dock y la grilla originales de CleanYourTV.
+- **Marquesina (`marquee`)**: la app enfocada ocupa la escena (nombre, luz de su color, *Abrir* e *Información*);
+  abajo, favoritas y la fila de entradas con las HDMI reales (`TvInputManager`, con punto verde si hay algo conectado).
+- **Aura (`aura`)**: reloj y una fila de tarjetas; un brillo del color de la app enfocada la sigue.
+- **Panel (`panel`)**: barra lateral, reloj, clima con los 7 días y grilla de 5 columnas.
+- **Órbita (`orbit`)**: reloj al centro y un arco circular de apps que gira con ◀ ▶ (un solo foco; las tarjetas se
+  mueven con animaciones de propiedades, sin relayout).
+- **Mosaico (`mosaic`)**: fecha grande, clima con barras por día y un mosaico con la favorita en grande y la primera HDMI.
+- **Sala (`bento`)** y **Clásico (`standard`)**, como antes.
 
-Los ids `gaming` y `minimal` se conservan, así que quien ya tenía elegido Modo Juego o Minimalista pasa
-directamente a Arena o Zen. Si un diseño no puede construirse, Inicio vuelve al Estándar en vez de cerrarse.
+Opciones compartidas (`HomeStyle`, en las preferencias del launcher): **color de acento** (según la app o fijo),
+**densidad** (cómoda/compacta), **saludo** y **fila de entradas**. Los ids anteriores `gaming`, `minimal` y `cinema`
+siguen funcionando para quien ya los tenía, pero no se ofrecen. Si un diseño no puede construirse, Inicio vuelve al
+Clásico en vez de cerrarse.
+
+## Menú de ajustes
+
+`LauncherSettingsActivity` está hecho en código: portada con el Inicio actual en miniatura y tarjetas por categoría,
+y una pantalla por categoría (Diseño y Fondo a pantalla completa; el resto, filas grandes con interruptores,
+segmentos y radios). Ruta de navegación arriba, guía de teclas del control abajo, y el fondo de pantalla desenfocado
+(32 px estirados, calculado una vez) detrás. Todo cambio se guarda al instante y sube `settings_revision`, así Inicio
+se reconstruye al volver.
 
 ## Pronóstico extendido
 

@@ -1482,6 +1482,49 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    /**
+     * The external inputs for a layout's quick row: top-level HDMI ports first (a CEC device on a port lends it
+     * its name, "HDMI 1 · PlayStation"), then the other passthrough inputs, leaving out hidden ones.
+     */
+    private List<HomeLayoutHost.HomeInput> quickInputs(int max) {
+        List<HomeLayoutHost.HomeInput> out = new ArrayList<>();
+        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
+        if (tim == null || max <= 0) return out;
+        try {
+            List<TvInputInfo> all = new ArrayList<>(tim.getTvInputList());
+            Set<String> ids = new HashSet<>();
+            for (TvInputInfo i : all) ids.add(i.getId());
+            Map<String, String> cecName = new HashMap<>();
+            for (TvInputInfo i : all) {
+                String parent = i.getParentId();
+                if (parent != null && ids.contains(parent) && i.isPassthroughInput() && !i.isHidden(this)) {
+                    CharSequence l = i.loadLabel(this);
+                    if (l != null && !cecName.containsKey(parent)) cecName.put(parent, l.toString());
+                }
+            }
+            Collections.sort(all, (a, b) -> {
+                boolean ha = a.getType() == TvInputInfo.TYPE_HDMI, hb = b.getType() == TvInputInfo.TYPE_HDMI;
+                if (ha != hb) return ha ? -1 : 1;
+                return String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this)));
+            });
+            for (TvInputInfo i : all) {
+                if (out.size() >= max) break;
+                if (!i.isPassthroughInput() || i.isHidden(this)) continue;
+                if (i.getParentId() != null && ids.contains(i.getParentId())) continue;
+                if (Integer.valueOf(-1).equals(mappedSource(i.getId()))) continue;
+                CharSequence l = i.loadLabel(this);
+                String label = l == null ? i.getId() : l.toString();
+                String device = cecName.get(i.getId());
+                if (device != null && !device.equals(label)) label = label + " \u00B7 " + device;
+                boolean connected = tim.getInputState(i.getId()) == TvInputManager.INPUT_STATE_CONNECTED;
+                out.add(new HomeLayoutHost.HomeInput(i.getId(), label, connected));
+            }
+        } catch (RuntimeException ignored) {
+            // A TV whose input service misbehaves: no quick row, the Inputs menu still works.
+        }
+        return out;
+    }
+
     /** The 7-day forecast over Home, from any weather chip. */
     private void openForecast(int accent) {
         if (liveWeather == null) return;
@@ -2697,11 +2740,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         CustomHomeLayout layout;
         try {
             switch (homeTheme) {
+                case HomeTheme.AURA: layout = new AuraHomeLayout(this); break;
+                case HomeTheme.PANEL: layout = new PanelHomeLayout(this); break;
+                case HomeTheme.ORBIT: layout = new OrbitHomeLayout(this); break;
+                case HomeTheme.MOSAIC: layout = new MosaicHomeLayout(this); break;
                 case HomeTheme.GAMING: layout = new ArenaHomeLayout(this); break;
                 case HomeTheme.MINIMAL: layout = new ZenHomeLayout(this); break;
                 case HomeTheme.BENTO: layout = new BentoHomeLayout(this); break;
                 case HomeTheme.CINEMA: layout = new CinemaHomeLayout(this); break;
-                default: layout = new AuraHomeLayout(this); break;
+                default: layout = new MarqueeHomeLayout(this); break;
             }
         } catch (RuntimeException e) {
             // A layout that cannot build must never cost the TV its Home: keep the standard one.
@@ -2783,6 +2830,28 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             @Override
             public String greetingName() {
                 return greetingName;
+            }
+
+            @Override
+            public List<HomeInput> inputs(int max) {
+                return quickInputs(max);
+            }
+
+            @Override
+            public void openInput(HomeInput input) {
+                MainActivity.this.openInput(input.id);
+            }
+
+            @Override
+            public void openAppInfo(AppAdapter.Entry app) {
+                Intent info = SystemSettings.appInfo(MainActivity.this, app.pkg);
+                if (info != null) open(info);
+            }
+
+            @Override
+            public void readForecast(LiveWeather.ForecastListener out) {
+                if (liveWeather != null) liveWeather.readForecast(out);
+                else out.onForecast(Collections.emptyList());
             }
         };
     }

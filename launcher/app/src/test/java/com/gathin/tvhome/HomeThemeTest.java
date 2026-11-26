@@ -8,36 +8,47 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class HomeThemeTest {
-    @Test public void auraIsTheDefaultAndUnknownIdsFallBackToIt() {
-        assertEquals(HomeTheme.AURA, HomeTheme.DEFAULT);
-        assertEquals(HomeTheme.AURA, HomeTheme.normalize(null));
-        assertEquals(HomeTheme.AURA, HomeTheme.normalize(""));
-        assertEquals(HomeTheme.AURA, HomeTheme.normalize("unknown"));
-        assertEquals(HomeTheme.CINEMA, HomeTheme.normalize(" Cinema "));
-        assertEquals(HomeTheme.BENTO, HomeTheme.normalize("BENTO"));
-        assertEquals(HomeTheme.GAMING, HomeTheme.normalize("gaming"));
-        assertEquals(HomeTheme.MINIMAL, HomeTheme.normalize("minimal"));
+    @Test public void marqueeIsTheDefaultAndUnknownIdsFallBackToIt() {
+        assertEquals(HomeTheme.MARQUEE, HomeTheme.DEFAULT);
+        assertEquals(HomeTheme.MARQUEE, HomeTheme.normalize(null));
+        assertEquals(HomeTheme.MARQUEE, HomeTheme.normalize(""));
+        assertEquals(HomeTheme.MARQUEE, HomeTheme.normalize("unknown"));
+        assertEquals(HomeTheme.AURA, HomeTheme.normalize(" Aura "));
+        assertEquals(HomeTheme.ORBIT, HomeTheme.normalize("ORBIT"));
         assertEquals(HomeTheme.STANDARD, HomeTheme.normalize("standard"));
     }
 
-    @Test public void onlyStandardKeepsTheDockAndGrid() {
-        assertTrue(HomeTheme.isStandard(HomeTheme.STANDARD));
-        assertFalse(HomeTheme.isStandard(null));
-        assertFalse(HomeTheme.usesCustomLayout(HomeTheme.STANDARD));
-        assertEquals(0, HomeTheme.focusAccent(HomeTheme.STANDARD));
-        for (String id : HomeTheme.ALL) {
-            if (!HomeTheme.STANDARD.equals(id)) {
-                assertTrue(id, HomeTheme.usesCustomLayout(id));
-                assertNotEquals(id, 0, HomeTheme.focusAccent(id));
-            }
-            assertNotEquals(0, HomeTheme.labelRes(id));
+    @Test public void earlierLayoutsStayValidButLeaveTheCarousel() {
+        for (String id : new String[]{HomeTheme.GAMING, HomeTheme.MINIMAL, HomeTheme.CINEMA}) {
+            assertEquals(id, HomeTheme.normalize(id));
+            assertEquals(-1, HomeTheme.index(id));
+            assertTrue(HomeTheme.usesCustomLayout(id));
         }
     }
 
-    @Test public void settingsListAuraFirstAndEveryLayoutOnce() {
-        assertEquals(HomeTheme.AURA, HomeTheme.ALL[0]);
-        assertEquals(6, HomeTheme.ALL.length);
-        assertEquals(6, new java.util.HashSet<>(java.util.Arrays.asList(HomeTheme.ALL)).size());
+    @Test public void theCarouselOffersSevenLayoutsMarqueeFirstAuraSecond() {
+        assertEquals(7, HomeTheme.ALL.length);
+        assertEquals(HomeTheme.MARQUEE, HomeTheme.ALL[0]);
+        assertEquals(HomeTheme.AURA, HomeTheme.ALL[1]);
+        assertEquals(7, new java.util.HashSet<>(java.util.Arrays.asList(HomeTheme.ALL)).size());
+        for (int i = 0; i < HomeTheme.ALL.length; i++) {
+            String id = HomeTheme.ALL[i];
+            assertEquals(i, HomeTheme.index(id));
+            assertNotEquals(0, HomeTheme.labelRes(id));
+            assertNotEquals(0, HomeTheme.descriptionRes(id));
+            assertTrue(LauncherSettingsActivity.thumbParts(id).length > 0);
+            assertEquals(!HomeTheme.STANDARD.equals(id), HomeTheme.usesCustomLayout(id));
+        }
+        assertEquals(0, HomeTheme.focusAccent(HomeTheme.STANDARD));
+    }
+
+    @Test public void homeStyleKeepsOnlyOfferedAccents() {
+        assertEquals(0, HomeStyle.validAccent(0));
+        assertEquals(Buzz.HONEY, HomeStyle.validAccent(Buzz.HONEY));
+        assertEquals(0, HomeStyle.validAccent(0xFF123456));
+        assertEquals(0.86f, new HomeStyle(0, true, true, true).scale(), 0.001f);
+        assertEquals(1f, new HomeStyle(0, false, true, true).scale(), 0.001f);
+        assertEquals(Buzz.HONEY, new HomeStyle(0, false, true, true).baseAccent());
     }
 
     @Test public void blendMixesEveryChannel() {

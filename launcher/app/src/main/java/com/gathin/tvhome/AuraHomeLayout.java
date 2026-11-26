@@ -30,6 +30,7 @@ final class AuraHomeLayout implements CustomHomeLayout {
     private static final float CARD_SCALE = 1.14f;
 
     private final Context ctx;
+    private final HomeStyle style;
     private final FrameLayout root;
     private final GradientDrawable aura;
     private final TextView greeting;
@@ -49,7 +50,13 @@ final class AuraHomeLayout implements CustomHomeLayout {
     private View lastCard;
 
     AuraHomeLayout(Context ctx) {
+        this(ctx, HomeStyle.load(ctx));
+    }
+
+    AuraHomeLayout(Context ctx, HomeStyle style) {
         this.ctx = ctx;
+        this.style = style;
+        this.accent = style.baseAccent();
         root = new FrameLayout(ctx);
         root.setClipChildren(false);
 
@@ -186,6 +193,7 @@ final class AuraHomeLayout implements CustomHomeLayout {
         String base = ctx.getString(Buzz.greetingRes(hour));
         String name = host == null ? "" : host.greetingName();
         greeting.setText(name.isEmpty() ? base : ctx.getString(R.string.greeting_with_name, base, name));
+        greeting.setVisibility(style.greeting ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -226,7 +234,7 @@ final class AuraHomeLayout implements CustomHomeLayout {
             }
         });
         card.setClipToOutline(true);
-        int cardAccent = e == null ? Buzz.HONEY : Buzz.accentOf(e);
+        int cardAccent = e == null ? style.baseAccent() : style.accentFor(e);
         String label = e == null ? ctx.getString(R.string.all_apps_short) : e.label;
         if (e != null && e.banner != null) {
             ImageView art = new ImageView(ctx);
@@ -278,7 +286,7 @@ final class AuraHomeLayout implements CustomHomeLayout {
                 fadeAuraTo(cardAccent);
             });
         });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(176), dp(99));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(176 * style.scale()), dp(99 * style.scale()));
         lp.setMarginEnd(dp(18));
         row.addView(card, lp);
         cards.add(card);
