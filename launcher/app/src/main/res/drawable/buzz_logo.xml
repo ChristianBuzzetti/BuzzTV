@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The BuzzPrint mark, drawn after resources/buzzprint.png in the BuzzPrint repository: a coral rounded square,
+     a dark hexagon with soft corners and two eyes. Used as BuzzTV's logo inside the launcher. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp"
+    android:viewportWidth="256" android:viewportHeight="256">
+    <path android:fillColor="#FFF43F5E"
+        android:pathData="M48,8 H208 A40,40 0 0 1 248,48 V208 A40,40 0 0 1 208,248 H48 A40,40 0 0 1 8,208 V48 A40,40 0 0 1 48,8 Z" />
+    <path android:fillColor="#FF0E1015" android:strokeColor="#FF0E1015" android:strokeWidth="16"
+        android:strokeLineJoin="round" android:pathData="M127.5,46 L199,88 L199,168 L127.5,209 L56,168 L56,88 Z" />
+    <path android:fillColor="#FFF4F4F5" android:pathData="M87.5,123.5 a14,20.5 0 1,0 28,0 a14,20.5 0 1,0 -28,0 Z M139.5,123.5 a14,20.5 0 1,0 28,0 a14,20.5 0 1,0 -28,0 Z" />
+</vector>

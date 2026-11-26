@@ -17,30 +17,58 @@ un **selector de temas en la TV**, para cambiar de tema con el control remoto si
   [`atardecer/`](../themes/atardecer/), [`mesh/`](../themes/mesh/), [`cosmos/`](../themes/cosmos/),
   [`neotokyo/`](../themes/neotokyo/), [`oceano/`](../themes/oceano/) y [`patagonia/`](../themes/patagonia/).
 
-## Diseños / Temas de inicio
+## Diseños de inicio
 
-Independiente del **Fondo** elegido, Configuración del launcher incluye **Diseño / Tema** (`home_theme`, por
-defecto `standard` / Estándar), con 5 diseños listos para cualquier fondo:
+En **Ajustes → Diseño de Inicio** (`home_theme`) hay siete diseños, todos sobre el mismo kit visual (`Buzz.java`) y
+con el clima clickeable. La pantalla muestra una **vista previa en vivo**: el diseño real, construido con las apps
+y el fondo de la TV y achicado (`LayoutPreview`). Por defecto, **Marquesina**.
 
-- **Estándar (`standard`)**: el diseño clásico tipo Apple TV.
-- **Cine en casa (`cinema`)**: encabezado limpio, título grande en dorado cálido (`#F6D58E`) sobre el dock y
-  foco con brillo dorado.
-- **Sala (`bento`)**: reloj grande y fino (`68sp`), fecha y clima dentro de una tarjeta translúcida en la
-  esquina superior izquierda, con borde de foco ámbar (`#F5B963`).
-- **Modo Juego (`gaming`)**: encabezado HUD en mayúsculas, estética oscura de alto contraste y foco verde
-  esmeralda (`#4ADE80`) con esquinas más marcadas.
-- **Minimalista (`minimal`)**: reloj, fecha y clima centrados arriba, botones de iconos compactos y dock
-  flotante transparente con foco blanco fino.
+- **Marquesina (`marquee`)**: la app enfocada ocupa la escena (nombre, luz de su color, *Abrir* e *Información*);
+  abajo, favoritas y la fila de entradas con las HDMI reales (`TvInputManager`, con punto verde si hay algo conectado).
+- **Aura (`aura`)**: reloj y una fila de tarjetas; un brillo del color de la app enfocada la sigue.
+- **Panel (`panel`)**: barra lateral, reloj, clima con los 7 días y grilla de 5 columnas.
+- **Órbita (`orbit`)**: reloj al centro y un arco circular de apps que gira con ◀ ▶ (un solo foco; las tarjetas se
+  mueven con animaciones de propiedades, sin relayout).
+- **Mosaico (`mosaic`)**: fecha grande, clima con barras por día y un mosaico con la favorita en grande y la primera HDMI.
+- **Sala (`bento`)** y **Clásico (`standard`)**, como antes.
+
+Opciones compartidas (`HomeStyle`, en las preferencias del launcher): **color de acento** (según la app o fijo),
+**densidad** (cómoda/compacta), **saludo** y **fila de entradas**. Los ids anteriores `gaming`, `minimal` y `cinema`
+siguen funcionando para quien ya los tenía, pero no se ofrecen. Si un diseño no puede construirse, Inicio vuelve al
+Clásico en vez de cerrarse.
+
+## Menú de ajustes
+
+`LauncherSettingsActivity` está hecho en código: portada con el Inicio actual en miniatura y tarjetas por categoría,
+y una pantalla por categoría (Diseño y Fondo a pantalla completa; el resto, filas grandes con interruptores,
+segmentos y radios). Ruta de navegación arriba, guía de teclas del control abajo, y el fondo de pantalla desenfocado
+(32 px estirados, calculado una vez) detrás. Todo cambio se guarda al instante y sube `settings_revision`, así Inicio
+se reconstruye al volver.
+
+## Pronóstico extendido
+
+Con **Clima en vivo** activado, el chip de clima de cualquier diseño se puede enfocar: **OK** abre el
+pronóstico de 7 días sobre Inicio. Arriba muestra las condiciones actuales (temperatura, sensación térmica,
+humedad, viento, máxima/mínima y probabilidad de lluvia); abajo, una tarjeta por día con ícono, máxima,
+mínima, una barra de rango coloreada de frío a calor en la escala de la semana y la probabilidad de lluvia.
+Moverse entre los días lleva el día enfocado al bloque grande. **Atrás** cierra.
+
+Necesita **BuzzTV Weather Sync 1.1** o posterior (`content://com.buzztv.weathersync/forecast`); con la versión
+1.0 el panel pide actualizar el add-on.
 
 ## Fondos animados y rotación
 
 Dos claves para cada fondo/tema y dos controles directos en Configuración del launcher:
 
-- **Animación de fondo (`wallpaper_animation`)**: selector con **Desactivada**, **Según fondo**, **Según clima**
-  (adaptado al clima real vía `LiveWeather`), o cualquiera de los 9 efectos livianos: `rain` (lluvia),
+- **Animación de fondo (`wallpaper_animation`)**: una sola animación para todos los fondos. Selector con
+  **Desactivada**, **Según clima** (adaptado al clima real vía `LiveWeather`), o cualquiera de los 9 efectos livianos: `rain` (lluvia),
   `storm` (tormenta con relámpagos suaves), `snow` (nieve), `stars` (estrellas y fugaces), `sunbeams`
   (rayos de sol), `clouds` (nubes), `bubbles` (burbujas), `fireflies` (luciérnagas) y `motes` (partículas).
-  Mantiene compatibilidad hacia atrás con `wallpaper_motion`.
+  El `wallpaper_effect` propio de cada fondo ya no se usa, y la antigua opción "Según fondo" (o el interruptor
+  `wallpaper_motion`) pasa a `motes` (partículas).
+- **Fondos sin recortes**: se quitó el zoom lento (`wallpaper_drift`), que recortaba hasta un 10 % de los bordes.
+  Una imagen con la proporción de la pantalla la llena exacta; una con otra proporción (4:3, ultrapanorámica,
+  vertical) se muestra entera, centrada, sobre un fondo suave hecho con sus propios colores, en vez de recortarse.
 - **Rotación de fondo (`wallpaper_rotation_minutes`)**: chips directos (`1 min`, `5 min`, `10 min`, `20 min`,
   `1 h`) que ajustan el intervalo de cambio cuando se usa un fondo rotativo.
 
@@ -57,7 +85,7 @@ fondo** está en **Según clima**, el clima real elige automáticamente el efect
 El launcher sigue sin permiso `INTERNET`. Los datos los provee el add-on liviano [`addons/weather-sync/`](../addons/weather-sync/),
 que detecta automáticamente la ciudad aproximada por IP (`get.geojs.io` / `ipwho.is`), consulta
 [Open-Meteo](https://open-meteo.com/) sin clave y expone el resultado por `content://com.buzztv.weathersync/current`
-sin servicios en segundo plano.
+y el pronóstico de 7 días por `content://com.buzztv.weathersync/forecast`, sin servicios en segundo plano.
 
 ## Uso
 

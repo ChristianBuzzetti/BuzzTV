@@ -3,154 +3,100 @@ package com.gathin.tvhome;
 import java.util.Locale;
 
 /**
- * Home screen layout themes, independent of the chosen wallpaper/background.
- * Default is {@link #STANDARD}, which leaves the built-in layout untouched.
+ * The Home layout, chosen in Ajustes › Diseño de Inicio and independent of the wallpaper. BuzzTV opens on
+ * {@link #MARQUEE}; {@link #STANDARD} ("Clásico") is CleanYourTV's own dock and grid, kept as it was. Every
+ * other layout is a full-screen {@link CustomHomeLayout} built from the {@link Buzz} design kit.
  */
 final class HomeTheme {
-    static final String STANDARD = "standard";
-    static final String CINEMA = "cinema";
+    static final String MARQUEE = "marquee";
+    static final String AURA = "aura";
+    static final String PANEL = "panel";
+    static final String ORBIT = "orbit";
+    static final String MOSAIC = "mosaic";
     static final String BENTO = "bento";
+    static final String STANDARD = "standard";
+    /** Earlier BuzzTV layouts: no longer offered, still honoured when a TV has one stored. */
     static final String GAMING = "gaming";
     static final String MINIMAL = "minimal";
+    static final String CINEMA = "cinema";
 
-    static final String[] ALL = {STANDARD, CINEMA, BENTO, GAMING, MINIMAL};
+    static final String DEFAULT = MARQUEE;
+    /** The layouts the settings carousel offers, in its order. */
+    static final String[] ALL = {MARQUEE, AURA, PANEL, ORBIT, MOSAIC, BENTO, STANDARD};
+    private static final String[] KNOWN = {MARQUEE, AURA, PANEL, ORBIT, MOSAIC, BENTO, STANDARD, GAMING, MINIMAL, CINEMA};
 
     /** Warm gold focus rim & hero accent for Home Cinema. */
     static final int ACCENT_CINEMA = 0xFFF6D58E;
     /** Warm amber focus rim & bento accent for Living Room (Sala). */
     static final int ACCENT_BENTO = 0xFFF5B963;
-    /** Crisp emerald-green HUD focus rim for Game Mode. */
-    static final int ACCENT_GAMING = 0xFF4ADE80;
 
     private HomeTheme() {}
 
-    /** Normalizes a stored or configured theme id to one of {@link #ALL}, defaulting to {@link #STANDARD}. */
+    /** Normalizes a stored or configured theme id to a known one, defaulting to {@link #DEFAULT}. */
     static String normalize(String raw) {
-        if (raw == null) return STANDARD;
+        if (raw == null) return DEFAULT;
         String value = raw.trim().toLowerCase(Locale.ROOT);
-        for (String id : ALL) {
+        for (String id : KNOWN) {
             if (id.equals(value)) return id;
         }
-        return STANDARD;
+        return DEFAULT;
     }
 
     static boolean isStandard(String id) {
         return STANDARD.equals(normalize(id));
     }
 
-    /** True for themes that replace the standard dock+grid view with a dedicated architectural layout. */
+    /** True for every layout but Standard: they replace the dock and grid with a layout of their own. */
     static boolean usesCustomLayout(String id) {
-        String n = normalize(id);
-        return CINEMA.equals(n) || BENTO.equals(n) || GAMING.equals(n);
+        return !isStandard(id);
     }
 
-    /** Focus highlight accent ARGB for GlassView, or 0 for default white glass. */
+    /** The layout's accent for shared surfaces (the All apps dialog), or 0 for Standard's white glass. */
     static int focusAccent(String id) {
         switch (normalize(id)) {
+            case GAMING: return ArenaHomeLayout.NEON;
+            case MINIMAL: return 0xFFFFFFFF;
             case CINEMA: return ACCENT_CINEMA;
             case BENTO: return ACCENT_BENTO;
-            case GAMING: return ACCENT_GAMING;
-            default: return 0;
+            case STANDARD: return 0;
+            default: return Buzz.HONEY;
         }
     }
 
-    /** Glass highlight style override for this theme, or {@code fallback} for Standard. */
-    static String glassStyle(String id, String fallback) {
-        switch (normalize(id)) {
-            case CINEMA:
-            case BENTO:
-            case MINIMAL:
-                return Config.GLASS_HALO;
-            case GAMING:
-                return Config.GLASS_RIM;
-            default:
-                return fallback;
-        }
-    }
-
-    /** Multiplier applied to the focus highlight corner radius (smaller = sharper corners). */
-    static float focusCornerScale(String id) {
-        switch (normalize(id)) {
-            case GAMING: return 0.45f;
-            case CINEMA: return 0.75f;
-            case BENTO: return 0.85f;
-            case MINIMAL: return 0.90f;
-            default: return 1.0f;
-        }
-    }
-
-    /** Primary clock text size in sp. */
-    static float clockSizeSp(String id) {
-        switch (normalize(id)) {
-            case BENTO: return 68f;
-            case MINIMAL: return 66f;
-            case CINEMA: return 32f;
-            case GAMING: return 28f;
-            default: return 52f;
-        }
-    }
-
-    /** Top-bar pill background fill color, or 0 to keep the default drawable. */
-    static int pillBgColor(String id) {
-        switch (normalize(id)) {
-            case CINEMA: return 0x80121824;
-            case BENTO: return 0x991A1612;
-            case GAMING: return 0xCC0D1114;
-            case MINIMAL: return 0x40000000;
-            default: return 0;
-        }
-    }
-
-    /** Top-bar pill border color when unfocused, or 0 to keep the default drawable. */
-    static int pillStrokeColor(String id) {
-        switch (normalize(id)) {
-            case CINEMA: return 0x4DF6D58E;
-            case BENTO: return 0x52F5B963;
-            case GAMING: return 0x664ADE80;
-            case MINIMAL: return 0x3DFFFFFF;
-            default: return 0;
-        }
-    }
-
-    /** Top-bar pill corner radius in dp. */
-    static float pillCornerDp(String id) {
-        switch (normalize(id)) {
-            case GAMING: return 6f;
-            case CINEMA: return 12f;
-            case BENTO: return 14f;
-            case MINIMAL: return 22f;
-            default: return 20f;
-        }
-    }
-
-    /** Whether the dock background band should be drawn for this theme. */
-    static boolean dockBand(String id, boolean fallback) {
-        return MINIMAL.equals(normalize(id)) ? false : fallback;
-    }
-
-    /** Effective dock opacity for this theme. */
-    static int dockOpacity(String id, int fallback) {
-        switch (normalize(id)) {
-            case GAMING: return Math.max(fallback, 88);
-            case CINEMA: return Math.min(fallback, 78);
-            case BENTO: return Math.min(fallback, 80);
-            default: return fallback;
-        }
-    }
-
-    /** Whether top-bar pills collapse to compact icon-only buttons for this theme. */
-    static boolean iconOnlyTopBar(String id, boolean fallback) {
-        return MINIMAL.equals(normalize(id)) || fallback;
+    /** Position in the carousel, 0-based, or -1 for a layout no longer offered. */
+    static int index(String id) {
+        String n = normalize(id);
+        for (int i = 0; i < ALL.length; i++) if (ALL[i].equals(n)) return i;
+        return -1;
     }
 
     /** String resource for the localized display name of a theme. */
     static int labelRes(String id) {
         switch (normalize(id)) {
+            case MARQUEE: return R.string.home_theme_marquee;
+            case AURA: return R.string.home_theme_aura;
+            case PANEL: return R.string.home_theme_panel;
+            case ORBIT: return R.string.home_theme_orbit;
+            case MOSAIC: return R.string.home_theme_mosaic;
             case CINEMA: return R.string.home_theme_cinema;
             case BENTO: return R.string.home_theme_bento;
             case GAMING: return R.string.home_theme_gaming;
             case MINIMAL: return R.string.home_theme_minimal;
             default: return R.string.home_theme_standard;
+        }
+    }
+
+    /** One line on what the layout is, for the settings screen. */
+    static int descriptionRes(String id) {
+        switch (normalize(id)) {
+            case MARQUEE: return R.string.home_theme_marquee_desc;
+            case AURA: return R.string.home_theme_aura_desc;
+            case PANEL: return R.string.home_theme_panel_desc;
+            case ORBIT: return R.string.home_theme_orbit_desc;
+            case MOSAIC: return R.string.home_theme_mosaic_desc;
+            case BENTO: return R.string.home_theme_bento_desc;
+            case STANDARD: return R.string.home_theme_standard_desc;
+            default: return R.string.home_theme_legacy_desc;
         }
     }
 }

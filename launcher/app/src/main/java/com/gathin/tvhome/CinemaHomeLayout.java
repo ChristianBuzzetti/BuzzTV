@@ -48,6 +48,16 @@ final class CinemaHomeLayout implements CustomHomeLayout {
         this.btnInputs = root.findViewById(R.id.cinemaBtnInputs);
         this.btnSettings = root.findViewById(R.id.cinemaBtnSettings);
         this.weatherRow = root.findViewById(R.id.cinemaWeatherRow);
+        // The weather opens the 7-day forecast.
+        weatherRow.setFocusable(true);
+        weatherRow.setClickable(true);
+        int wpad = Buzz.dp(ctx, 10);
+        weatherRow.setPadding(wpad, wpad / 2, wpad, wpad / 2);
+        weatherRow.setBackground(Buzz.glassPill(ctx, 18, HomeTheme.ACCENT_CINEMA));
+        weatherRow.setOnClickListener(v -> {
+            if (host != null) host.openForecast(HomeTheme.ACCENT_CINEMA);
+        });
+        Buzz.lift(weatherRow, 1.05f, null);
         this.weatherIcon = root.findViewById(R.id.cinemaWeatherIcon);
         this.weatherText = root.findViewById(R.id.cinemaWeatherText);
         this.cardsRow = root.findViewById(R.id.cinemaCardsRow);
@@ -109,6 +119,7 @@ final class CinemaHomeLayout implements CustomHomeLayout {
             View card = buildCard(entry.label, entry.banner != null ? entry.banner : entry.icon,
                     entry.banner != null, cardW, cardH, i > 0 ? gap : 0);
             card.setOnClickListener(v -> host.launchApp(entry));
+            Buzz.holdForInfo(card, entry, host);
             card.setOnFocusChangeListener((v, focused) -> {
                 animateCardFocus(v, focused);
                 if (focused) {

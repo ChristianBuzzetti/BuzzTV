@@ -59,6 +59,16 @@ final class BentoHomeLayout implements CustomHomeLayout {
 
         wifiStatus = root.findViewById(R.id.bentoWifiStatus);
         weatherRow = root.findViewById(R.id.bentoWeatherRow);
+        // The weather opens the 7-day forecast.
+        weatherRow.setFocusable(true);
+        weatherRow.setClickable(true);
+        int wpad = Buzz.dp(ctx, 10);
+        weatherRow.setPadding(wpad, wpad / 2, wpad, wpad / 2);
+        weatherRow.setBackground(Buzz.glassPill(ctx, 18, HomeTheme.ACCENT_BENTO));
+        weatherRow.setOnClickListener(v -> {
+            if (host != null) host.openForecast(HomeTheme.ACCENT_BENTO);
+        });
+        Buzz.lift(weatherRow, 1.05f, null);
         weatherIcon = root.findViewById(R.id.bentoWeatherIcon);
         weatherText = root.findViewById(R.id.bentoWeatherText);
 
@@ -88,6 +98,12 @@ final class BentoHomeLayout implements CustomHomeLayout {
                 } else {
                     host.openAllApps();
                 }
+            });
+            tiles[i].setOnLongClickListener(v -> {
+                AppAdapter.Entry entry = tileEntries[index];
+                if (host == null || entry == null) return false;
+                host.openAppInfo(entry);
+                return true;
             });
         }
 

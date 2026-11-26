@@ -63,4 +63,49 @@ public class WeatherLogicTest {
         assertEquals("motes", WeatherLogic.effectFor(0, true));
         assertEquals("motes", WeatherLogic.effectFor(2, true));
     }
+
+    @Test
+    public void parsesCurrentExtras() {
+        String json = "{\"current\":{\"temperature_2m\":21.6,\"weather_code\":1,\"is_day\":1,"
+                + "\"apparent_temperature\":23.4,\"relative_humidity_2m\":64,\"wind_speed_10m\":12.6}}";
+        WeatherLogic.Reading r = WeatherLogic.parseWeather(json, "", 1L);
+        assertNotNull(r);
+        assertEquals(23, r.feelsC);
+        assertEquals(64, r.humidity);
+        assertEquals(13, r.windKmh);
+        WeatherLogic.Reading old = WeatherLogic.parseWeather(
+                "{\"current\":{\"temperature_2m\":10,\"weather_code\":0}}", "", 1L);
+        assertNotNull(old);
+        assertEquals(WeatherLogic.UNKNOWN, old.humidity);
+    }
+
+    @Test
+    public void parsesSevenDayForecastAndRoundTripsTheCache() {
+        String json = "{\"daily\":{\"time\":[\"2026-11-26\",\"2026-11-27\",\"2026-11-28\"],"
+                + "\"weather_code\":[3,61,null],\"temperature_2m_max\":[28.4,22.5,20],"
+                + "\"temperature_2m_min\":[17.6,15.1,12],\"precipitation_probability_max\":[10,null,80]}}";
+        java.util.List<WeatherLogic.Day> days = WeatherLogic.parseForecast(json);
+        assertEquals(2, days.size());
+        assertEquals("2026-11-26", days.get(0).date);
+        assertEquals(28, days.get(0).maxC);
+        assertEquals(18, days.get(0).minC);
+        assertEquals(10, days.get(0).precipPct);
+        assertEquals(61, days.get(1).weatherCode);
+        assertEquals(-1, days.get(1).precipPct);
+
+        java.util.List<WeatherLogic.Day> back = WeatherLogic.decodeForecast(WeatherLogic.encodeForecast(days));
+        assertEquals(2, back.size());
+        assertEquals("2026-11-27", back.get(1).date);
+        assertEquals(15, back.get(1).minC);
+        assertTrue(WeatherLogic.parseForecast("{}").isEmpty());
+        assertTrue(WeatherLogic.decodeForecast("garbage;1,2").isEmpty());
+    }
+
+    @Test
+    public void urlAsksForTheDailyForecast() {
+        String url = WeatherLogic.openMeteoUrl(-34.6, -58.4);
+        assertTrue(url.contains("daily=weather_code,temperature_2m_max,temperature_2m_min"));
+        assertTrue(url.contains("forecast_days=7"));
+        assertFalse(url.contains(","+"-58.4000,"));
+    }
 }

@@ -69,39 +69,20 @@ final class Config {
      */
     static final String WEATHER_LIVE_KEY = "weather_live";
 
-    /** The slow zoom every background gets with Animated background on when its section asks for none. */
-    static final int DEFAULT_DRIFT = 5;
     /** wallpaper_dim for every picture at random, where no single section's own value applies. */
     static final int DEFAULT_BACKGROUND_DIM = 12;
 
     /**
-     * The drift for a background: 0 while the Animated background switch is off; with it on, the background's
-     * own drift, or DEFAULT_DRIFT for one that asks for none, so every background moves once the switch is on.
+     * Resolves the Background animation setting. BuzzTV draws one chosen animation over every background, so the
+     * old "match background" choice ("auto", and the legacy on/off switch) now means the default one, MOTES.
      */
-    static int wallpaperDrift(boolean motionOn, int drift) {
-        return motionOn ? (drift > 0 ? drift : DEFAULT_DRIFT) : 0;
-    }
-
-    /**
-     * The particle effect a background asks for, or MOTES when Animated background is on and the background
-     * has no specific effect, so every background has particles once the switch is on.
-     */
-    static String wallpaperEffect(boolean motionOn, String effect) {
-        if (!motionOn) return WallpaperMotion.NONE;
-        String valid = WallpaperMotion.effect(effect);
-        return WallpaperMotion.NONE.equals(valid) ? WallpaperMotion.MOTES : valid;
-    }
-
-    /** Resolves the wallpaper animation setting, falling back to the legacy boolean switch when unset. */
     static String wallpaperAnimation(String raw, boolean legacyMotionOn) {
         if (raw == null || raw.trim().isEmpty()) {
-            return legacyMotionOn ? WALLPAPER_ANIMATION_AUTO : WALLPAPER_ANIMATION_NONE;
+            return legacyMotionOn ? WallpaperMotion.MOTES : WALLPAPER_ANIMATION_NONE;
         }
         String v = raw.trim().toLowerCase(java.util.Locale.ROOT);
-        if (WALLPAPER_ANIMATION_WEATHER.equals(v) || WALLPAPER_ANIMATION_AUTO.equals(v)
-                || WALLPAPER_ANIMATION_NONE.equals(v)) {
-            return v;
-        }
+        if (WALLPAPER_ANIMATION_AUTO.equals(v)) return WallpaperMotion.MOTES;
+        if (WALLPAPER_ANIMATION_WEATHER.equals(v) || WALLPAPER_ANIMATION_NONE.equals(v)) return v;
         String eff = WallpaperMotion.effect(v);
         return WallpaperMotion.NONE.equals(eff) ? WALLPAPER_ANIMATION_NONE : eff;
     }
@@ -111,11 +92,14 @@ final class Config {
         return !WALLPAPER_ANIMATION_NONE.equals(animation);
     }
 
-    /** Initial particle effect for the chosen animation mode and background's own effect. */
-    static String wallpaperEffectForAnimation(String animation, String sectionEffect) {
+    /**
+     * The particle effect for the chosen animation: the same on every background, whatever a background's own
+     * config.json asks for. "Match weather" starts with MOTES until the first reading arrives.
+     */
+    static String wallpaperEffectFor(String animation) {
         if (animation == null || WALLPAPER_ANIMATION_NONE.equals(animation)) return WallpaperMotion.NONE;
-        if (WALLPAPER_ANIMATION_AUTO.equals(animation) || WALLPAPER_ANIMATION_WEATHER.equals(animation)) {
-            return wallpaperEffect(true, sectionEffect);
+        if (WALLPAPER_ANIMATION_WEATHER.equals(animation) || WALLPAPER_ANIMATION_AUTO.equals(animation)) {
+            return WallpaperMotion.MOTES;
         }
         return WallpaperMotion.effect(animation);
     }
@@ -788,15 +772,19 @@ final class Config {
         int chosenRotation = choices.getInt(WALLPAPER_ROTATION_KEY, 0);
         int wallpaperDim = json == null ? 0 : integer(json, "wallpaper_dim", 0, 0, 90);
         String homeTheme = HomeTheme.normalize(choices.getString(HOME_THEME_KEY,
-                json == null ? HomeTheme.STANDARD : string(json, HOME_THEME_KEY, HomeTheme.STANDARD)));
+                json == null ? HomeTheme.DEFAULT : string(json, HOME_THEME_KEY, HomeTheme.DEFAULT)));
         boolean legacyMotion = choices.getBoolean(WALLPAPER_MOTION_KEY, false);
         String wallpaperAnimation = wallpaperAnimation(choices.getString(WALLPAPER_ANIMATION_KEY, null), legacyMotion);
-        boolean wallpaperMotion = wallpaperAnimationEnabled(wallpaperAnimation);
         boolean weatherLive = choices.getBoolean(WEATHER_LIVE_KEY, false);
-        int wallpaperDrift = wallpaperDrift(wallpaperMotion,
-                json == null ? 0 : integer(json, "wallpaper_drift", 0, 0, 10));
-        String wallpaperEffect = wallpaperEffectForAnimation(wallpaperAnimation, json == null ? WallpaperMotion.NONE
-                : WallpaperMotion.effect(string(json, "wallpaper_effect", WallpaperMotion.NONE)));
+        // BuzzTV: no slow zoom. It cut the edges of every picture by up to 10 %; backgrounds now always show whole.
+        // wallpaper_drift and wallpaper_effect stay valid theme keys and are still read, so the theme tools keep
+        // them, but their values are not applied: one animation, picked in Launcher settings, for every background.
+        if (json != null) {
+            integer(json, "wallpaper_drift", 0, 0, 10);
+            string(json, "wallpaper_effect", WallpaperMotion.NONE);
+        }
+        int wallpaperDrift = 0;
+        String wallpaperEffect = wallpaperEffectFor(wallpaperAnimation);
         int dockOpacity = json == null ? 100 : integer(json, "dock_opacity", 100, 30, 100);
         dockOpacity = chosenDockOpacity(choices.getInt(DOCK_OPACITY_KEY, -1), dockOpacity);
         clockFormat = choices.getString(CLOCK_FORMAT_KEY, clockFormat);
@@ -830,24 +818,8 @@ final class Config {
             rotationMinutes = picked.size() > 1 ? chosenRotationMinutes(chosenRotation, defaultPicked) : 0;
             wallpaperOrder = WallpaperRotation.ORDER_SHUFFLE;
             wallpaperDim = sj == null ? DEFAULT_BACKGROUND_DIM : integer(sj, "wallpaper_dim", 0, 0, 90);
-            wallpaperDrift = wallpaperDrift(wallpaperMotion, sj == null ? 0 : integer(sj, "wallpaper_drift", 0, 0, 10));
-            wallpaperEffect = wallpaperEffectForAnimation(wallpaperAnimation, sj == null ? WallpaperMotion.NONE
-                    : WallpaperMotion.effect(string(sj, "wallpaper_effect", WallpaperMotion.NONE)));
             wallpaperCaptions = false;
             wallpaperMoods = Collections.emptyMap();
-        }
-        if (!HomeTheme.isStandard(homeTheme)) {
-            dockBand = HomeTheme.dockBand(homeTheme, dockBand);
-            dockOpacity = HomeTheme.dockOpacity(homeTheme, dockOpacity);
-            glassStyle = HomeTheme.glassStyle(homeTheme, glassStyle);
-            if (HomeTheme.MINIMAL.equals(homeTheme)) {
-                iconOnlyButtons = true;
-                iconOnlyInputs = true;
-                columns = Math.min(columns, 5);
-            }
-            if (HomeTheme.CINEMA.equals(homeTheme) || HomeTheme.GAMING.equals(homeTheme)) {
-                dockTitle = true;
-            }
         }
         // A festive skin comes only from a theme; config.xml has no festival. seasonal_skin names one the same way
         // but launchers before it ignore the key, so a theme can carry it without older ones showing the diya skin.

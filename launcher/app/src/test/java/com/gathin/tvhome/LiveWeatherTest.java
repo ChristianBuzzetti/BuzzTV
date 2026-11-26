@@ -56,4 +56,34 @@ public class LiveWeatherTest {
         assertEquals(WallpaperMotion.STARS, LiveWeather.effectFor(new LiveWeather.Reading(15, 0, false, "BA", "", 1L)));
         assertEquals(WallpaperMotion.STARS, LiveWeather.effectFor(new LiveWeather.Reading(14, 1, false, "BA", "", 1L)));
     }
+
+    @Test
+    public void labelsForecastDays() {
+        java.time.LocalDate today = java.time.LocalDate.of(2026, 11, 26);   // a Thursday
+        java.util.Locale es = new java.util.Locale("es");
+        assertEquals("Hoy", LiveWeather.dayLabel(today, today, "Hoy", "Mañana", es));
+        assertEquals("Mañana", LiveWeather.dayLabel(today.plusDays(1), today, "Hoy", "Mañana", es));
+        assertEquals("Sáb", LiveWeather.dayLabel(today.plusDays(2), today, "Hoy", "Mañana", es));
+        assertEquals("Mon", LiveWeather.dayLabel(today.plusDays(4), today, "Today", "Tomorrow",
+                java.util.Locale.ENGLISH));
+    }
+
+    @Test
+    public void placesEachDayOnTheWeeksScale() {
+        float[] r = LiveWeather.rangeFractions(15, 25, 10, 30);
+        assertEquals(0.25f, r[0], 1e-4f);
+        assertEquals(0.75f, r[1], 1e-4f);
+        float[] flat = LiveWeather.rangeFractions(20, 20, 20, 20);
+        assertEquals(0f, flat[0], 1e-4f);
+        assertEquals(1f, flat[1], 1e-4f);
+        assertEquals(null, LiveWeather.parseDate("not a date"));
+        assertEquals(java.time.LocalDate.of(2026, 11, 27), LiveWeather.parseDate("2026-11-27"));
+    }
+
+    @Test
+    public void temperatureColoursRunCoolToWarm() {
+        assertEquals(0xFF5AA9FF, ForecastPanel.tempColor(-5));
+        assertEquals(0xFFFFC53D, ForecastPanel.tempColor(24));
+        assertEquals(0xFFFF5A4E, ForecastPanel.tempColor(40));
+    }
 }
