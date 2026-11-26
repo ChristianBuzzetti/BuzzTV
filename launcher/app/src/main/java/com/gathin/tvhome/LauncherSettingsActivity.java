@@ -77,7 +77,12 @@ public final class LauncherSettingsActivity extends Activity {
     private String pendingTheme;
     private HomeStyle pendingStyle;
     private FrameLayout designPreviewHolder;
+    /** The small preview on the Ajustes hub, swapped for a fresh one when the weather arrives. */
+    private FrameLayout hubPreview;
     private TextView designKicker, designTitle, designDesc;
+    /** The carousel's thumbnails, each tagged with its layout id, and the button that applies the pick. */
+    private final List<View> designThumbs = new ArrayList<>();
+    private TextView designUse;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -85,16 +90,43 @@ public final class LauncherSettingsActivity extends Activity {
         choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
         config = Config.load(this);
         wallpaper = decodeWallpaper();
-        previewHost = LayoutPreview.host(this);
+        previewHost = LayoutPreview.host(this, () -> weather);
         setContentView(chrome());
-        if (choices.getBoolean(Config.WEATHER_LIVE_KEY, false)) {
-            weather = new LiveWeather(this, main, r -> {
-                reading = r;
-                updateHeaderWeather();
-            });
-            weather.read();
-        }
+        if (choices.getBoolean(Config.WEATHER_LIVE_KEY, false)) startWeather();
         showHub();
+    }
+
+    /**
+     * Reads the Weather Sync add-on for the header and the previews. start(), not read(): LiveWeather hands a
+     * reading to its listener only while started, so a bare read() left Ajustes without weather and its preview
+     * asking to turn on a Clima that was already on. onDestroy's shutdown() stops it.
+     */
+    private void startWeather() {
+        weather = new LiveWeather(this, main, r -> {
+            reading = r;
+            updateHeaderWeather();
+            // Posted: the first reading can land before the hub is attached, and View.post waits for that.
+            content.post(this::refreshPreviewsForWeather);
+        });
+        weather.start();
+    }
+
+    /** Redraws whichever live preview is on screen, so it shows the reading that just arrived. */
+    private void refreshPreviewsForWeather() {
+        if (designPreviewHolder != null && designPreviewHolder.isAttachedToWindow()) {
+            refreshDesignPreview();
+        }
+        if (hubPreview != null && hubPreview.isAttachedToWindow() && hubPreview.getParent() instanceof ViewGroup) {
+            ViewGroup parent = (ViewGroup) hubPreview.getParent();
+            int at = parent.indexOfChild(hubPreview);
+            FrameLayout fresh = LayoutPreview.create(this, config.homeTheme, HomeStyle.load(this), wallpaper,
+                    previewHost, reading, dp(270));
+            fresh.setElevation(hubPreview.getElevation());
+            fresh.setLayoutParams(hubPreview.getLayoutParams());
+            parent.removeViewAt(at);
+            parent.addView(fresh, at);
+            hubPreview = fresh;
+        }
     }
 
     @Override
@@ -240,6 +272,7 @@ public final class LauncherSettingsActivity extends Activity {
         pl.topMargin = dp(16);
         preview.setElevation(dp(12));
         aside.addView(preview, pl);
+        hubPreview = preview;
         LinearLayout chips = new LinearLayout(this);
         chips.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams chl = wrap();
@@ -425,6 +458,7 @@ public final class LauncherSettingsActivity extends Activity {
         carousel.setClipToPadding(false);
         carousel.setPadding(0, dp(14), 0, 0);
         left.addView(carousel, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        designThumbs.clear();
         View selectedThumb = null;
         for (int i = 0; i < HomeTheme.ALL.length; i++) {
             String id = HomeTheme.ALL[i];
@@ -499,6 +533,7 @@ public final class LauncherSettingsActivity extends Activity {
         buttons.setClipChildren(false);
         aside.addView(buttons, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46)));
         TextView use = Buzz.pill(this, R.string.design_use, true);
+        designUse = use;
         use.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
         use.setPadding(dp(10), 0, dp(10), 0);
         use.setBackground(Buzz.states(gradientPill(), Buzz.round(0xFFFFD36B, dp(23), dp(3), Buzz.TEXT)));
@@ -534,6 +569,32 @@ public final class LauncherSettingsActivity extends Activity {
         designKicker.setText(getString(R.string.design_counter, idx + 1, HomeTheme.ALL.length));
         designTitle.setText(HomeTheme.labelRes(pendingTheme));
         designDesc.setText(HomeTheme.descriptionRes(pendingTheme));
+        if (designUse != null) {
+            designUse.setText(getString(R.string.design_use_named, getString(HomeTheme.labelRes(pendingTheme))));
+        }
+        markDesignThumbs();
+    }
+
+    /**
+     * The picked layout stays marked when the focus moves on: a honey ring, a check badge and its name in honey.
+     * The layout Home uses now carries a small "En uso" line, so the two are never confused.
+     */
+    private void markDesignThumbs() {
+        String inUse = HomeTheme.normalize(config.homeTheme);
+        for (View t : designThumbs) {
+            String id = (String) t.getTag();
+            boolean picked = id.equals(pendingTheme);
+            View badge = t.findViewWithTag("badge");
+            TextView name = t.findViewWithTag("name");
+            TextView use = t.findViewWithTag("inuse");
+            t.setSelected(picked);
+            if (badge != null) badge.setVisibility(picked ? View.VISIBLE : View.INVISIBLE);
+            if (name != null) {
+                name.setTextColor(picked ? Buzz.HONEY : t.hasFocus() || t.isFocused() ? Buzz.TEXT : Buzz.TEXT_2);
+                name.setTypeface(Buzz.font(this, picked ? R.string.font_medium : R.string.font_regular));
+            }
+            if (use != null) use.setVisibility(id.equals(inUse) ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 
     private void refreshDesignPreview() {
@@ -576,30 +637,63 @@ public final class LauncherSettingsActivity extends Activity {
             glow.setBackground(g);
             box.addView(glow, 0, match());
         }
+        // The ring follows the thumbnail's own state: honey and thick for the picked layout, white for focus only.
         View ring = new View(this);
-        ring.setBackground(Buzz.states(Buzz.round(0, r, Math.max(1, dp(1)), 0x1FFFFFFF), Buzz.round(0, r, dp(2), Buzz.HONEY)));
+        android.graphics.drawable.StateListDrawable ringStates = new android.graphics.drawable.StateListDrawable();
+        ringStates.addState(new int[]{android.R.attr.state_selected}, Buzz.round(0x26FFC53D, r, dp(3), Buzz.HONEY));
+        ringStates.addState(new int[]{android.R.attr.state_focused}, Buzz.round(0, r, dp(2), Buzz.TEXT));
+        ringStates.addState(new int[]{}, Buzz.round(0, r, Math.max(1, dp(1)), 0x1FFFFFFF));
+        ring.setBackground(ringStates);
         ring.setDuplicateParentStateEnabled(true);
+        ring.setTag("ring");
         box.addView(ring, match());
+        TextView badge = Buzz.text(this, 9, 0xFF1A1204, R.string.font_medium);
+        badge.setText("✓");
+        badge.setGravity(Gravity.CENTER);
+        badge.setBackground(Buzz.round(Buzz.HONEY, dp(8), 0, 0));
+        badge.setVisibility(View.INVISIBLE);
+        badge.setTag("badge");
+        FrameLayout.LayoutParams bdl = new FrameLayout.LayoutParams(dp(16), dp(16), Gravity.TOP | Gravity.END);
+        bdl.topMargin = dp(4);
+        bdl.rightMargin = dp(4);
+        box.addView(badge, bdl);
         col.addView(box, new LinearLayout.LayoutParams(bw, bh));
         TextView name = Buzz.text(this, 12, Buzz.TEXT_2, R.string.font_regular);
         name.setText(HomeTheme.labelRes(id));
+        name.setTag("name");
         LinearLayout.LayoutParams nl = wrap();
         nl.topMargin = dp(6);
         col.addView(name, nl);
+        TextView inUse = Buzz.text(this, 9, 0xFF3DD68C, R.string.font_medium);
+        inUse.setText(R.string.design_in_use);
+        inUse.setAllCaps(true);
+        inUse.setLetterSpacing(0.08f);
+        inUse.setVisibility(View.INVISIBLE);
+        inUse.setTag("inuse");
+        LinearLayout.LayoutParams ul = wrap();
+        ul.topMargin = dp(2);
+        col.addView(inUse, ul);
+        col.setTag(id);
         col.setContentDescription(getString(HomeTheme.labelRes(id)));
+        // OK picks the layout and goes straight to the button that applies it.
         col.setOnClickListener(v -> {
-            pendingTheme = id;
-            refreshDesignText();
-            refreshDesignPreview();
-        });
-        Buzz.lift(col, 1.08f, (v, f) -> {
-            name.setTextColor(f ? Buzz.TEXT : Buzz.TEXT_2);
-            if (f && !id.equals(pendingTheme)) {
+            if (!id.equals(pendingTheme)) {
                 pendingTheme = id;
                 refreshDesignText();
                 refreshDesignPreview();
             }
+            if (designUse != null) designUse.requestFocus();
         });
+        Buzz.lift(col, 1.08f, (v, f) -> {
+            if (f && !id.equals(pendingTheme)) {
+                pendingTheme = id;
+                refreshDesignText();
+                refreshDesignPreview();
+            } else {
+                markDesignThumbs();
+            }
+        });
+        designThumbs.add(col);
         return col;
     }
 
@@ -1121,13 +1215,7 @@ public final class LauncherSettingsActivity extends Activity {
         View t = toggle(R.string.weather_live_label, on, v -> {
             choices.edit().putBoolean(Config.WEATHER_LIVE_KEY, v).apply();
             changed();
-            if (v && weather == null) {
-                weather = new LiveWeather(this, main, r -> {
-                    reading = r;
-                    updateHeaderWeather();
-                });
-                weather.read();
-            }
+            if (v && weather == null) startWeather();
         });
         addRow(rows, t);
         addRow(rows, actionRow(getString(R.string.weather_open_forecast), reading == null ? "" : getString(R.string.degrees, reading.tempC), () -> {

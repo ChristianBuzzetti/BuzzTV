@@ -26,11 +26,17 @@ y el fondo de la TV y achicado (`LayoutPreview`). Por defecto, **Marquesina**.
 - **Marquesina (`marquee`)**: la app enfocada ocupa la escena (nombre, luz de su color, *Abrir* e *Información*);
   abajo, favoritas y la fila de entradas con las HDMI reales (`TvInputManager`, con punto verde si hay algo conectado).
 - **Aura (`aura`)**: reloj y una fila de tarjetas; un brillo del color de la app enfocada la sigue.
-- **Panel (`panel`)**: barra lateral, reloj, clima con los 7 días y grilla de 5 columnas.
+- **Panel (`panel`)**: barra lateral (Inicio, Apps, Entradas, Clima, Ajustes), reloj, clima con los 7 días centrados
+  en sus columnas y grilla de 5 columnas.
 - **Órbita (`orbit`)**: reloj al centro y un arco circular de apps que gira con ◀ ▶ (un solo foco; las tarjetas se
   mueven con animaciones de propiedades, sin relayout).
 - **Mosaico (`mosaic`)**: fecha grande, clima con barras por día y un mosaico con la favorita en grande y la primera HDMI.
+  Arriba a la izquierda, Entradas y Configuración (mantener OK abre Ajustes), como en el resto de los diseños.
 - **Sala (`bento`)** y **Clásico (`standard`)**, como antes.
+
+En el carrusel, **OK** elige el diseño y lleva el foco a **Usar Mosaico** (con el nombre del diseño); el elegido queda marcado (borde y nombre
+en miel, con ✓) y el que Inicio usa ahora dice **EN USO**. Todos los diseños tienen un camino a Ajustes: un botón
+Configuración donde mantener OK lo abre.
 
 Opciones compartidas (`HomeStyle`, en las preferencias del launcher): **color de acento** (según la app o fijo),
 **densidad** (cómoda/compacta), **saludo** y **fila de entradas**. Los ids anteriores `gaming`, `minimal` y `cinema`
@@ -43,7 +49,8 @@ Clásico en vez de cerrarse.
 y una pantalla por categoría (Diseño y Fondo a pantalla completa; el resto, filas grandes con interruptores,
 segmentos y radios). Ruta de navegación arriba, guía de teclas del control abajo, y el fondo de pantalla desenfocado
 (32 px estirados, calculado una vez) detrás. Todo cambio se guarda al instante y sube `settings_revision`, así Inicio
-se reconstruye al volver.
+se reconstruye al volver. Ajustes lee el clima del add-on igual que Inicio, así la cabecera y las vistas previas
+muestran el clima y la semana reales.
 
 ## Pronóstico extendido
 

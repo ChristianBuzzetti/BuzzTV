@@ -117,7 +117,11 @@ final class LayoutPreview {
     }
 
     /** The TV's apps for previews, read once from the package manager; nothing in it does anything. */
-    static HomeLayoutHost host(Context c) {
+    /**
+     * @param weather the screen's own reader, asked each time a layout wants the week (Mosaico's bars, Panel's
+     *                days), so the preview shows the same forecast as Home; it may give null while Clima is off
+     */
+    static HomeLayoutHost host(Context c, java.util.function.Supplier<LiveWeather> weather) {
         List<AppAdapter.Entry> apps = new ArrayList<>();
         PackageManager pm = c.getPackageManager();
         try {
@@ -147,6 +151,11 @@ final class LayoutPreview {
             public String wifiLabel() { return ""; }
             public void openForecast(int accent) { }
             public String greetingName() { return ""; }
+            public void readForecast(LiveWeather.ForecastListener out) {
+                LiveWeather w = weather == null ? null : weather.get();
+                if (w != null) w.readForecast(out);
+                else out.onForecast(Collections.emptyList());
+            }
         };
     }
 }

@@ -16,15 +16,17 @@ En **Ajustes → Diseño de Inicio** elegís la arquitectura de tu pantalla de i
 | **Aura (`aura`)**<br>Reloj grande y fino con saludo, fecha y clima; una fila de tarjetas abajo. Un brillo con el color de la app enfocada sube detrás de la fila y la sigue. | ![Diseño Aura](docs/screenshots/theme-aura.jpg) |
 | **Panel (`panel`)**<br>Tablero: barra lateral (Inicio, Apps, Entradas, Clima, Ajustes), tarjeta de reloj, tarjeta de clima con la semana entera y apps en grilla de 5 columnas. | ![Diseño Panel](docs/screenshots/theme-panel.jpg) |
 | **Órbita (`orbit`)**<br>Reloj enorme al centro y las apps en un arco que girás con izquierda y derecha; la enfocada queda al centro, más grande. | ![Diseño Órbita](docs/screenshots/theme-orbita.jpg) |
-| **Mosaico (`mosaic`)**<br>Editorial: el día en tipografía grande, el clima con barras por día y un mosaico donde la favorita ocupa una tarjeta grande y la primera entrada HDMI una ancha. | ![Diseño Mosaico](docs/screenshots/theme-mosaico.jpg) |
+| **Mosaico (`mosaic`)**<br>Editorial: el día en tipografía grande, el clima con barras por día y un mosaico donde la favorita ocupa una tarjeta grande y la primera entrada HDMI una ancha. Arriba, Entradas y Configuración. | ![Diseño Mosaico](docs/screenshots/theme-mosaico.jpg) |
 | **Sala (`bento`)**<br>Tarjeta con reloj, fecha y clima a la izquierda, grilla 2×2 de apps a la derecha y barra de 3 botones. | ![Diseño Sala](docs/screenshots/theme-sala.jpg) |
 | **Clásico (`standard`)**<br>El dock y la grilla de CleanYourTV. | ![Diseño Clásico](docs/screenshots/theme-estandar.jpg) |
 
 En cualquiera de estos diseños, **mantener OK sobre una app** abre su pantalla de *Información de la app* de Android (forzar detención, desinstalar, almacenamiento, permisos). En Clásico, mantener OK sigue abriendo su menú, que también incluye *Información de la app*.
 
+En el carrusel de **Diseño de Inicio**, **OK** elige el diseño y lleva directo a **Usar Mosaico** (con el nombre del diseño); el elegido queda marcado con borde dorado y ✓, y el que tenés puesto dice **EN USO**.
+
 Todos comparten el color de acento (según la app o fijo), la densidad (cómoda o compacta), el saludo y la fila de entradas, que se ajustan en la misma pantalla. Quien tenía elegido Modo Juego, Minimalista o Cine en casa los conserva hasta que elija otro.
 
-> Las vistas de Marquesina, Aura, Panel, Órbita, Mosaico, del menú y del pronóstico son renders del código real a 1920×1080 con apps de ejemplo; reemplazalas por capturas de tu TV (`tools/tv.py --screenshot`).
+> Todas las vistas son capturas reales de una Philips Google TV (Android 14) con `tools/tv.py --screenshot`, reducidas a 1280×720. La ciudad del clima y el nombre de la red Wi‑Fi están difuminados.
 
 ### Pronóstico extendido
 
@@ -42,9 +44,7 @@ Mantené **OK** sobre *Configuración* en Inicio para abrir **Ajustes**: una por
 |---|---|---|
 | ![Ajustes](docs/screenshots/ajustes.jpg) | ![Diseño de Inicio](docs/screenshots/ajustes-diseno.jpg) | ![Fondo](docs/screenshots/ajustes-fondo.jpg) |
 
-El protector de pantalla (reloj) muestra el clima en vivo:
-
-![Protector de pantalla](docs/screenshots/protector-pantalla.jpg)
+El protector de pantalla (reloj) también muestra el clima en vivo.
 
 ---
 

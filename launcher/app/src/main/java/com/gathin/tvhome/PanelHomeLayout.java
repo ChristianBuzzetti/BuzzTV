@@ -72,7 +72,8 @@ final class PanelHomeLayout implements CustomHomeLayout {
         View apps = railButton(R.drawable.ic_apps, R.string.panel_apps, accent, false);
         View ins = railButton(R.drawable.ic_input, R.string.inputs, accent, false);
         View weather = railButton(R.drawable.ic_cloud, R.string.panel_weather, accent, false);
-        View settings = railButton(R.drawable.ic_settings, R.string.settings, accent, false);
+        // "Ajustes", short enough for the rail's 58 dp: "Configuración" was cut to "Configurac…".
+        View settings = railButton(R.drawable.ic_settings, R.string.panel_settings, accent, false);
         rail = new View[]{home, apps, ins, weather, settings};
         for (View v : rail) nav.addView(v);
         home.setOnClickListener(v -> {
@@ -117,6 +118,8 @@ final class PanelHomeLayout implements CustomHomeLayout {
 
         weatherCard = card(true, accent);
         weatherCard.setId(View.generateViewId());
+        // A little more room inside than the clock card: the reading and the week sit off the edge.
+        weatherCard.setPadding(dp(26), dp(16), dp(26), dp(14));
         weatherCard.setOnClickListener(v -> host.openForecast(accent));
         Buzz.lift(weatherCard, 1.03f, null);
         LinearLayout now = new LinearLayout(ctx);
@@ -124,7 +127,9 @@ final class PanelHomeLayout implements CustomHomeLayout {
         now.setGravity(Gravity.CENTER_VERTICAL);
         weatherCard.addView(now, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         weatherIcon = new WeatherIconView(ctx);
-        now.addView(weatherIcon, new LinearLayout.LayoutParams(dp(36), dp(36)));
+        LinearLayout.LayoutParams wil = new LinearLayout.LayoutParams(dp(36), dp(36));
+        wil.setMarginStart(dp(4));
+        now.addView(weatherIcon, wil);
         weatherTemp = Buzz.text(ctx, 34, Buzz.TEXT, R.string.font_light);
         LinearLayout.LayoutParams wtp = wrap();
         wtp.setMarginStart(dp(10));
@@ -290,6 +295,13 @@ final class PanelHomeLayout implements CustomHomeLayout {
         host.readForecast(this::fillWeek);
     }
 
+    private static LinearLayout.LayoutParams centred() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        return lp;
+    }
+
     private void fillWeek(List<LiveWeather.Day> days) {
         week.removeAllViews();
         if (days.isEmpty()) return;
@@ -304,15 +316,19 @@ final class PanelHomeLayout implements CustomHomeLayout {
             // Today by name, then short weekdays: "Mañana" would not fit the narrow column.
             String label = i == 0 ? todayWord
                     : LiveWeather.dayLabel(d.date, today.minusDays(30), todayWord, todayWord, Locale.getDefault());
+            // Each line centred in its column: a plain addView here would give the text the column's whole width,
+            // left-aligned, and the week would lean against the card's left edge.
             TextView day = Buzz.text(ctx, 11, Buzz.TEXT_2, R.string.font_regular);
             day.setText(label);
-            c.addView(day);
+            c.addView(day, centred());
             TextView max = Buzz.text(ctx, 14, Buzz.TEXT, R.string.font_medium);
             max.setText(ctx.getString(R.string.degrees, d.maxC));
-            c.addView(max);
+            LinearLayout.LayoutParams ml = centred();
+            ml.topMargin = dp(2);
+            c.addView(max, ml);
             TextView min = Buzz.text(ctx, 11, Buzz.TEXT_3, R.string.font_regular);
             min.setText(ctx.getString(R.string.degrees, d.minC));
-            c.addView(min);
+            c.addView(min, centred());
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
             lp.setMarginEnd(i == 6 ? 0 : dp(6));
             week.addView(c, lp);
