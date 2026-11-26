@@ -119,6 +119,7 @@ final class CinemaHomeLayout implements CustomHomeLayout {
             View card = buildCard(entry.label, entry.banner != null ? entry.banner : entry.icon,
                     entry.banner != null, cardW, cardH, i > 0 ? gap : 0);
             card.setOnClickListener(v -> host.launchApp(entry));
+            Buzz.holdForInfo(card, entry, host);
             card.setOnFocusChangeListener((v, focused) -> {
                 animateCardFocus(v, focused);
                 if (focused) {

@@ -200,6 +200,7 @@ final class MosaicHomeLayout implements CustomHomeLayout {
             if (e == null) host.openAllApps();
             else host.launchApp(e);
         });
+        Buzz.holdForInfo(t, e, host);
         Buzz.lift(t, hero ? 1.04f : 1.08f, (v, f) -> {
             if (f) {
                 lastTile = v;

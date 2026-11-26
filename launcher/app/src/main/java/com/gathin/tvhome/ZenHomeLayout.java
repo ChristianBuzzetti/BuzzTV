@@ -195,6 +195,7 @@ final class ZenHomeLayout implements CustomHomeLayout {
             if (e == null) host.openAllApps();
             else host.launchApp(e);
         });
+        Buzz.holdForInfo(row, e, host);
         row.setOnFocusChangeListener((v, focused) -> {
             long ms = Buzz.FOCUS_MS;
             name.animate().alpha(focused ? 1f : DIM).setDuration(ms).start();

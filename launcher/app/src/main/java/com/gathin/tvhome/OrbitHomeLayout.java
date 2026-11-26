@@ -38,6 +38,7 @@ final class OrbitHomeLayout implements CustomHomeLayout {
     private Drawable rest;
     private HomeLayoutHost host;
     private int index;
+    private boolean held;
 
     OrbitHomeLayout(Context ctx) {
         this(ctx, HomeStyle.load(ctx));
@@ -151,9 +152,19 @@ final class OrbitHomeLayout implements CustomHomeLayout {
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_NUMPAD_ENTER:
-                if (e.getAction() == KeyEvent.ACTION_UP && !tiles.isEmpty()) {
-                    AppAdapter.Entry app = entries.get(index);
-                    if (app == null) host.openAllApps();
+                if (tiles.isEmpty()) return true;
+                AppAdapter.Entry app = entries.get(index);
+                if (e.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (e.getRepeatCount() == 0) held = false;
+                    // Held: the app's App info page, as on every other layout, and the release opens nothing.
+                    if (!held && app != null && e.getEventTime() - e.getDownTime()
+                            >= android.view.ViewConfiguration.getLongPressTimeout()) {
+                        held = true;
+                        host.openAppInfo(app);
+                    }
+                } else if (e.getAction() == KeyEvent.ACTION_UP) {
+                    if (held) held = false;
+                    else if (app == null) host.openAllApps();
                     else host.launchApp(app);
                 }
                 return true;

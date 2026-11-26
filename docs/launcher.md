@@ -48,6 +48,9 @@ Click **Settings** for the TV's own settings. Hold OK on it for its menu:
 - **Restart…** while `HomeKeyService` runs, which opens the system power menu (a launcher may not
   restart the TV itself).
 
+On the BuzzTV layouts (every layout but Classic), holding OK on an app opens its App info page straight away
+(force stop, uninstall, storage, permissions); on Classic it opens the tile menu above.
+
 BuzzTV's settings (4.0) open on a hub: the current Home as a live miniature on the left, the categories as cards
 on the right. Every change is saved at once and Home rebuilds when it comes back. **Personalize**:
 

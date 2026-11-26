@@ -262,6 +262,7 @@ final class PanelHomeLayout implements CustomHomeLayout {
                 if (e == null) host.openAllApps();
                 else host.launchApp(e);
             });
+            Buzz.holdForInfo(t, e, host);
             Buzz.lift(t, 1.1f, (v, f) -> {
                 if (f) {
                     lastTile = v;

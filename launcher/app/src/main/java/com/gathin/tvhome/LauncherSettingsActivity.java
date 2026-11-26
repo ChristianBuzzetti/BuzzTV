@@ -117,6 +117,7 @@ public final class LauncherSettingsActivity extends Activity {
     private View chrome() {
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(0xFF06080E);
+        root.setClipChildren(false);   // side panels reach past the content margins to the screen's edges
         if (wallpaper != null) {
             // The wallpaper shrunk to 32 px and stretched back: a soft wash of its colours, made once.
             Bitmap tiny = Bitmap.createScaledBitmap(wallpaper, 32, Math.max(1, 32 * wallpaper.getHeight() / wallpaper.getWidth()), true);
@@ -683,6 +684,7 @@ public final class LauncherSettingsActivity extends Activity {
 
         LinearLayout across = new LinearLayout(this);
         across.setOrientation(LinearLayout.HORIZONTAL);
+        across.setClipChildren(false);   // the side panel reaches past the content margins to the screen's edges
         content.addView(across, match());
 
         // The left column clips: the chip row and the gallery scroll inside it and never paint over the panel.
@@ -717,6 +719,10 @@ public final class LauncherSettingsActivity extends Activity {
             HorizontalScrollView chipScroll = new HorizontalScrollView(this);
             chipScroll.setHorizontalScrollBarEnabled(false);
             chipScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+            // A carousel: the chips slide under a soft fade at either end, never past the panel's line.
+            chipScroll.setHorizontalFadingEdgeEnabled(true);
+            chipScroll.setFadingEdgeLength(dp(56));
+            chipScroll.setSmoothScrollingEnabled(true);
             LinearLayout chips = new LinearLayout(this);
             chips.setOrientation(LinearLayout.HORIZONTAL);
             chips.setClipChildren(false);
@@ -742,6 +748,8 @@ public final class LauncherSettingsActivity extends Activity {
                 });
                 chips.addView(c);
                 if (i == focusChip) keep = c;
+                if (c.isSelected()) chipScroll.post(() -> chipScroll.smoothScrollTo(
+                        Math.max(0, c.getLeft() - chipScroll.getWidth() / 3), 0));
             }
 
             ScrollView scroll = new ScrollView(this);
@@ -793,12 +801,21 @@ public final class LauncherSettingsActivity extends Activity {
         }
 
         // Right: how the picture is chosen, how often it changes (only when it does), the animation.
+        // A fixed side panel: flush with the right and bottom edges of the screen, behind a hairline the gallery
+        // and the section carousel never cross.
+        View rule = new View(this);
+        rule.setBackgroundColor(0x24FFFFFF);
+        LinearLayout.LayoutParams rul = new LinearLayout.LayoutParams(Math.max(1, dp(1)), ViewGroup.LayoutParams.MATCH_PARENT);
+        rul.setMarginStart(dp(10));
+        rul.bottomMargin = -dp(48);
+        across.addView(rule, rul);
         LinearLayout aside = new LinearLayout(this);
         aside.setOrientation(LinearLayout.VERTICAL);
-        aside.setPadding(dp(18), dp(18), dp(18), dp(18));
-        aside.setBackground(Buzz.round(0xB8101420, dp(20), Math.max(1, dp(1)), 0x1AFFFFFF));
-        LinearLayout.LayoutParams asl = new LinearLayout.LayoutParams(dp(262), ViewGroup.LayoutParams.MATCH_PARENT);
-        asl.setMarginStart(dp(18));
+        aside.setPadding(dp(24), dp(6), dp(48), dp(56));
+        aside.setBackgroundColor(0xE60B0F18);
+        LinearLayout.LayoutParams asl = new LinearLayout.LayoutParams(dp(300), ViewGroup.LayoutParams.MATCH_PARENT);
+        asl.setMarginEnd(-dp(48));
+        asl.bottomMargin = -dp(48);
         across.addView(aside, asl);
         aside.addView(Buzz.kicker(this, R.string.background_how, Buzz.TEXT_3));
         String current = gallerySection != null ? gallerySection : choices.getString(BackgroundLibrary.SECTION_KEY, null);
@@ -938,12 +955,11 @@ public final class LauncherSettingsActivity extends Activity {
     }
 
     private View picture(File f, String section, boolean selected, List<View> cells) {
-        FrameLayout cell = new FrameLayout(this);
+        float r = dp(14);
+        FrameLayout cell = new Buzz.RoundFrame(this, r);
         cell.setFocusable(true);
         cell.setClickable(true);
-        float r = dp(14);
-        Buzz.roundClip(cell, r);
-        cell.setBackgroundColor(0xFF141A26);
+        cell.setBackground(Buzz.round(0xFF141A26, r, 0, 0));
         ImageView img = new ImageView(this);
         img.setScaleType(ImageView.ScaleType.CENTER_CROP);
         cell.addView(img, match());

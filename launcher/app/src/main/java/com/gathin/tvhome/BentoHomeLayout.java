@@ -99,6 +99,12 @@ final class BentoHomeLayout implements CustomHomeLayout {
                     host.openAllApps();
                 }
             });
+            tiles[i].setOnLongClickListener(v -> {
+                AppAdapter.Entry entry = tileEntries[index];
+                if (host == null || entry == null) return false;
+                host.openAppInfo(entry);
+                return true;
+            });
         }
 
         btnApps = root.findViewById(R.id.bentoBtnApps);

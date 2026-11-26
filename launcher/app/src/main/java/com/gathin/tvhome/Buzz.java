@@ -129,20 +129,17 @@ final class Buzz {
 
     /**
      * Lets a view that grows on focus draw past its parents' edges, so its ring is never cut. Every container up
-     * to the nearest scrolling one stops clipping; the scrolling one keeps its content inside its own bounds
-     * (its parent clips it), so scrolled-away rows never paint over the rest of the screen. A scroll's content
-     * carries padding for the growth.
+     * to the nearest scrolling one stops clipping, and the walk stops there: whatever holds a scroll decides
+     * whether its content may run past it (a Home row to the screen's edge) or not (the Background gallery, whose
+     * column clips). A scroll's content carries padding for the growth.
      */
     static void unclip(View v) {
         android.view.ViewParent p = v.getParent();
         while (p instanceof ViewGroup) {
             ViewGroup g = (ViewGroup) p;
             g.setClipChildren(false);
-            if (g instanceof android.widget.ScrollView || g instanceof android.widget.HorizontalScrollView) {
-                g.setClipToPadding(false);
-                if (g.getParent() instanceof ViewGroup) ((ViewGroup) g.getParent()).setClipChildren(true);
-                return;
-            }
+            g.setClipToPadding(false);
+            if (g instanceof android.widget.ScrollView || g instanceof android.widget.HorizontalScrollView) return;
             p = g.getParent();
         }
     }
@@ -245,7 +242,7 @@ final class Buzz {
      * the layout adds its own lift.
      */
     static FrameLayout appCard(Context c, AppAdapter.Entry e, int accent, float radiusDp, boolean preferIcon) {
-        FrameLayout card = new FrameLayout(c);
+        FrameLayout card = new RoundFrame(c, dp(c, radiusDp));
         card.setId(View.generateViewId());
         card.setFocusable(true);
         card.setClickable(true);
@@ -343,6 +340,51 @@ final class Buzz {
         s.setSpan(new android.text.style.ForegroundColorSpan(accent | 0xFF000000), first.length(), first.length() + 2,
                 android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return s;
+    }
+
+    /**
+     * Holding OK on an app opens its App info page (force stop, uninstall, storage, permissions), in every BuzzTV
+     * layout, through View's own long press: the click that would open the app does not follow.
+     */
+    static void holdForInfo(View card, AppAdapter.Entry app, HomeLayoutHost host) {
+        if (app == null) return;
+        card.setLongClickable(true);
+        card.setOnLongClickListener(v -> {
+            if (host != null) host.openAppInfo(app);
+            return true;
+        });
+    }
+
+    /**
+     * A FrameLayout clipped to rounded corners everywhere: the outline clip covers hardware drawing (smooth
+     * edges), and a path clip takes over only when it draws in software (screenshots, some previews), where the
+     * outline clip does not apply and square picture corners would show past the focus ring.
+     */
+    static final class RoundFrame extends FrameLayout {
+        private final float radius;
+        private final android.graphics.Path path = new android.graphics.Path();
+        private final android.graphics.RectF rect = new android.graphics.RectF();
+
+        RoundFrame(Context c, float radius) {
+            super(c);
+            this.radius = radius;
+            roundClip(this, radius);
+        }
+
+        @Override
+        protected void dispatchDraw(android.graphics.Canvas canvas) {
+            if (canvas.isHardwareAccelerated()) {
+                super.dispatchDraw(canvas);
+                return;
+            }
+            rect.set(0, 0, getWidth(), getHeight());
+            path.reset();
+            path.addRoundRect(rect, radius, radius, android.graphics.Path.Direction.CW);
+            int save = canvas.save();
+            canvas.clipPath(path);
+            super.dispatchDraw(canvas);
+            canvas.restoreToCount(save);
+        }
     }
 
     static void center(TextView t) {

@@ -34,12 +34,11 @@ final class LayoutPreview {
         DisplayMetrics m = c.getResources().getDisplayMetrics();
         int screenW = Math.max(m.widthPixels, m.heightPixels), screenH = Math.min(m.widthPixels, m.heightPixels);
         int heightPx = Math.round(widthPx * screenH / (float) screenW);
-        FrameLayout box = new FrameLayout(c);
+        FrameLayout box = new Buzz.RoundFrame(c, Buzz.dp(c, 14));
         box.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         box.setFocusable(false);
         box.setClipChildren(true);
         box.setLayoutParams(new ViewGroup.LayoutParams(widthPx, heightPx));
-        Buzz.roundClip(box, Buzz.dp(c, 14));
         box.setBackgroundColor(0xFF0A0D14);
 
         FrameLayout screen = new FrameLayout(c);

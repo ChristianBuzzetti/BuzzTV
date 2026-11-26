@@ -222,18 +222,7 @@ final class AuraHomeLayout implements CustomHomeLayout {
 
     /** One card in the row: the app's banner, or its icon on a tinted glass; null makes the All apps card. */
     private View appCard(AppAdapter.Entry e) {
-        FrameLayout card = new FrameLayout(ctx);
-        card.setId(View.generateViewId());
-        card.setFocusable(true);
-        card.setClickable(true);
-        float radius = dp(14);
-        card.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View v, Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius);
-            }
-        });
-        card.setClipToOutline(true);
+        FrameLayout card = new Buzz.RoundFrame(ctx, dp(14));
         int cardAccent = e == null ? style.baseAccent() : style.accentFor(e);
         String label = e == null ? ctx.getString(R.string.all_apps_short) : e.label;
         if (e != null && e.banner != null) {
@@ -271,6 +260,7 @@ final class AuraHomeLayout implements CustomHomeLayout {
             if (e == null) host.openAllApps();
             else host.launchApp(e);
         });
+        Buzz.holdForInfo(card, e, host);
         Buzz.lift(card, CARD_SCALE, (v, focused) -> {
             if (!focused) return;
             lastCard = v;

@@ -200,6 +200,7 @@ final class MarqueeHomeLayout implements CustomHomeLayout {
             if (e == null) host.openAllApps();
             else host.launchApp(e);
         });
+        Buzz.holdForInfo(card, e, host);
         Buzz.lift(card, 1.16f, (v, focused) -> {
             if (!focused) return;
             lastCard = v;

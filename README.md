@@ -18,6 +18,8 @@ En **Ajustes → Diseño de Inicio** elegís la arquitectura de tu pantalla de i
 | **Sala (`bento`)**<br>Tarjeta con reloj, fecha y clima a la izquierda, grilla 2×2 de apps a la derecha y barra de 3 botones. | ![Diseño Sala](docs/screenshots/theme-sala.jpg) |
 | **Clásico (`standard`)**<br>El dock y la grilla de CleanYourTV. | ![Diseño Clásico](docs/screenshots/theme-estandar.jpg) |
 
+En cualquiera de estos diseños, **mantener OK sobre una app** abre su pantalla de *Información de la app* de Android (forzar detención, desinstalar, almacenamiento, permisos). En Clásico, mantener OK sigue abriendo su menú, que también incluye *Información de la app*.
+
 Todos comparten el color de acento (según la app o fijo), la densidad (cómoda o compacta), el saludo y la fila de entradas, que se ajustan en la misma pantalla. Quien tenía elegido Modo Juego, Minimalista o Cine en casa los conserva hasta que elija otro.
 
 > Las vistas de Marquesina, Aura, Panel, Órbita, Mosaico, del menú y del pronóstico son renders del código real a 1920×1080 con apps de ejemplo; reemplazalas por capturas de tu TV (`tools/tv.py --screenshot`).

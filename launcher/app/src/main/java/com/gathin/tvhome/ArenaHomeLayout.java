@@ -232,21 +232,14 @@ final class ArenaHomeLayout implements CustomHomeLayout {
     }
 
     private View tile(AppAdapter.Entry e) {
-        FrameLayout t = new FrameLayout(ctx);
+        float r = dp(18);
+        FrameLayout t = new Buzz.RoundFrame(ctx, r);
         t.setId(View.generateViewId());
         t.setFocusable(true);
         t.setClickable(true);
         int tint = e == null ? VIOLET : Buzz.accentOf(e);
-        float r = dp(18);
         t.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{
                 Buzz.blend(tint, 0xFF080B12, 0.62f), Buzz.blend(tint, 0xFF080B12, 0.88f)}));
-        t.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View v, Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), r);
-            }
-        });
-        t.setClipToOutline(true);
         ImageView icon = new ImageView(ctx);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setImageDrawable(e == null ? ctx.getDrawable(R.drawable.ic_apps) : Buzz.iconArt(e));
@@ -263,6 +256,7 @@ final class ArenaHomeLayout implements CustomHomeLayout {
             if (e == null) host.openAllApps();
             else host.launchApp(e);
         });
+        Buzz.holdForInfo(t, e, host);
         Buzz.lift(t, 1.18f, (v, focused) -> {
             if (!focused) return;
             lastTile = v;
