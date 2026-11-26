@@ -209,6 +209,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String homeTheme = HomeTheme.STANDARD;
     private CustomHomeLayout customLayout;
     private Dialog allAppsDialog;
+    private Dialog forecastDialog;
     private String lastWifiLabel = "";
     private Map<String, String> launchActionsMap = Collections.emptyMap();
     private View weatherRow;
@@ -971,8 +972,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
         if (festive) applyFestiveSkin((TextView) btnInputs, (TextView) btnSettings);
-        if (HomeTheme.usesCustomLayout(homeTheme)) attachCustomHomeLayout(cfg);
-        else if (!HomeTheme.isStandard(homeTheme)) applyHomeTheme(cfg);
+        if (HomeTheme.usesCustomLayout(homeTheme)) attachCustomHomeLayout();
+        // Standard: the weather line under the clock opens the 7-day forecast too.
+        if (customLayout == null && weatherRow != null) {
+            weatherRow.setFocusable(true);
+            weatherRow.setClickable(true);
+            weatherRow.setBackground(Buzz.states(Buzz.round(0, 8 * density, 0, 0),
+                    Buzz.round(0x33FFFFFF, 8 * density, 0, 0)));
+            weatherRow.setOnClickListener(v -> openForecast(0));
+        }
 
         // Hide the glass when focus leaves the tiles.
         // Taken off in onDestroy: recreate() keeps the window, and a listener left on it held every earlier Home.
@@ -1181,6 +1189,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (showStats) startStats();
         if (gameDay != null) gameDay.start();
         if (liveWeather != null) liveWeather.start();
+        if (customLayout != null) customLayout.onShown();
         sky.update();
         wallpaperPlayer.start();
         handler.postDelayed(minuteTick, MINUTE_MS);
@@ -1361,6 +1370,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         cancelHoldOk();
         root.removeCallbacks(showIdleClock);
         endReorder();   // Home or another app while reordering keeps the order so far
+        if (forecastDialog != null) forecastDialog.dismiss();
         wallpaperPlayer.stop();
         stopAmbientAnimation();
         hero.animate().cancel();
@@ -1470,6 +1480,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (wallpaperPlayer != null && Config.WALLPAPER_ANIMATION_WEATHER.equals(wallpaperAnimation)) {
             wallpaperPlayer.setWeatherEffect(LiveWeather.effectFor(reading));
         }
+    }
+
+    /** The 7-day forecast over Home, from any weather chip. */
+    private void openForecast(int accent) {
+        if (liveWeather == null) return;
+        if (forecastDialog != null && forecastDialog.isShowing()) return;
+        forecastDialog = ForecastPanel.show(this, liveWeather, liveWeather.last(), accent);
     }
 
     /** Default glass focus accent: festive accent first, then active HomeTheme accent, else plain white (0). */
@@ -1939,7 +1956,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             lp.height = (int) h;
             glass.setLayoutParams(lp);
             // GlassView draws its slab inset by pad, i.e. exactly over the zoomed tile: same corners as the tile.
-            glass.setRadius(AppAdapter.cornerRadius(card.getWidth(), density) * scale * HomeTheme.focusCornerScale(homeTheme));
+            glass.setRadius(AppAdapter.cornerRadius(card.getWidth(), density) * scale);
         }
         glassCardW = card.getWidth();
         glassCardRect.set(r);
@@ -2673,213 +2690,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * Applies one of the non-standard {@link HomeTheme} layouts (Cinema, Bento/Sala, Gaming, Minimal)
-     * without changing the chosen wallpaper or breaking D-pad navigation.
-     */
-    private void applyHomeTheme(Config cfg) {
-        TextView clock = findViewById(R.id.clock);
-        TextView ampm = findViewById(R.id.ampm);
-        View divider = findViewById(R.id.clockDivider);
-        TextView date = findViewById(R.id.date);
-        LinearLayout left = (LinearLayout) clockBlock;
-        LinearLayout topButtons = findViewById(R.id.topButtons);
-        View scrim = findViewById(R.id.heroScrim);
-
-        clock.setTextSize(TypedValue.COMPLEX_UNIT_SP, HomeTheme.clockSizeSp(homeTheme));
-        styleThemedPills(homeTheme);
-
-        if (HomeTheme.CINEMA.equals(homeTheme)) {
-            greeting.setVisibility(View.VISIBLE);
-            greeting.setAllCaps(false);
-            greeting.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f);
-            greeting.setLetterSpacing(0.01f);
-            greetingColor = 0xFFF6EFE2;
-            greeting.setTextColor(greetingColor);
-            clock.setTextColor(0xFFF6EFE2);
-            divider.setBackgroundColor(0x55F6D58E);
-            ViewGroup.LayoutParams dlp = divider.getLayoutParams();
-            dlp.height = Math.round(18 * density);
-            divider.setLayoutParams(dlp);
-            date.setTextColor(0xCCF6EFE2);
-            heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 58f);
-            heroName.setTextColor(HomeTheme.ACCENT_CINEMA);
-            heroName.setShadowLayer(12f * density, 0f, 3f * density, 0xCC000000);
-            if (!cinematic && scrim != null) {
-                scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                        new int[]{0x38080C14, 0x00080C14, 0xC8080C14}));
-                scrim.setVisibility(View.VISIBLE);
-            }
-        } else if (HomeTheme.BENTO.equals(homeTheme)) {
-            if (!cfg.dateBelowClock) moveDateBelowClock();
-            greeting.setVisibility(View.VISIBLE);
-            greeting.setAllCaps(false);
-            greeting.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f);
-            greeting.setLetterSpacing(0.03f);
-            greetingColor = 0xFFF4ECE0;
-            greeting.setTextColor(greetingColor);
-            // Warm amber vertical bar accent beside "Sala", matching the bento card aesthetic.
-            GradientDrawable bar = new GradientDrawable();
-            bar.setColor(HomeTheme.ACCENT_BENTO);
-            bar.setCornerRadius(2f * density);
-            bar.setBounds(0, 0, Math.round(3.5f * density), Math.round(16 * density));
-            greeting.setCompoundDrawablesRelative(bar, null, null, null);
-            greeting.setCompoundDrawablePadding(Math.round(10 * density));
-            greeting.setPadding(0, 0, 0, Math.round(6 * density));
-
-            GradientDrawable cardBg = new GradientDrawable();
-            cardBg.setColor(0x8C121418);
-            cardBg.setCornerRadius(20f * density);
-            cardBg.setStroke(Math.max(1, Math.round(density)), 0x4DF5B963);
-            left.setBackground(cardBg);
-            int padH = Math.round(24 * density);
-            int padV = Math.round(16 * density);
-            left.setPadding(padH, padV, padH, padV);
-            RelativeLayout.LayoutParams llp = (RelativeLayout.LayoutParams) left.getLayoutParams();
-            llp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-            left.setLayoutParams(llp);
-            ViewGroup.LayoutParams glp = greeting.getLayoutParams();
-            glp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-            greeting.setLayoutParams(glp);
-            View bentoClockRow = (View) clock.getParent();
-            ViewGroup.LayoutParams bcrp = bentoClockRow.getLayoutParams();
-            bcrp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-            bentoClockRow.setLayoutParams(bcrp);
-
-            date.setAllCaps(false);
-            date.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f);
-            date.setLetterSpacing(0.02f);
-            date.setTextColor(0xCCFFFFFF);
-            if (weatherText != null) {
-                weatherText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f);
-                weatherText.setTextColor(0xFFF4ECE0);
-            }
-            if (weatherIcon != null) {
-                ViewGroup.LayoutParams ilp = weatherIcon.getLayoutParams();
-                ilp.width = Math.round(20 * density);
-                ilp.height = Math.round(20 * density);
-                weatherIcon.setLayoutParams(ilp);
-            }
-            RelativeLayout.LayoutParams tlp = (RelativeLayout.LayoutParams) topButtons.getLayoutParams();
-            tlp.removeRule(RelativeLayout.ALIGN_BOTTOM);
-            tlp.addRule(RelativeLayout.ALIGN_TOP, R.id.leftBlock);
-            tlp.topMargin = Math.round(4 * density);
-            tlp.bottomMargin = 0;
-            topButtons.setLayoutParams(tlp);
-
-            if (!cinematic && scrim != null) {
-                scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                        new int[]{0x00100E0C, 0x00100E0C, 0x8C100E0C}));
-                scrim.setVisibility(View.VISIBLE);
-            }
-        } else if (HomeTheme.GAMING.equals(homeTheme)) {
-            greeting.setVisibility(View.VISIBLE);
-            greeting.setAllCaps(true);
-            greeting.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f);
-            greeting.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            greeting.setLetterSpacing(0.08f);
-            greetingColor = 0xFFFFFFFF;
-            greeting.setTextColor(greetingColor);
-
-            clock.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            clock.setTextColor(HomeTheme.ACCENT_GAMING);
-            ampm.setTextColor(0xCC4ADE80);
-            divider.setBackgroundColor(0x664ADE80);
-            ViewGroup.LayoutParams dlp = divider.getLayoutParams();
-            dlp.height = Math.round(16 * density);
-            divider.setLayoutParams(dlp);
-            date.setTextColor(0xD9FFFFFF);
-            date.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-
-            heroName.setAllCaps(true);
-            heroName.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 42f);
-            heroName.setLetterSpacing(0.04f);
-            heroName.setTextColor(0xFFFFFFFF);
-            heroName.setShadowLayer(10f * density, 0f, 2f * density, 0xCC000000);
-
-            if (!cinematic && scrim != null) {
-                scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                        new int[]{0x70080B0E, 0x26080B0E, 0xCC080B0E}));
-                scrim.setVisibility(View.VISIBLE);
-            }
-        } else if (HomeTheme.MINIMAL.equals(homeTheme)) {
-            greeting.setVisibility(View.GONE);
-            if (!cfg.dateBelowClock) moveDateBelowClock();
-            RelativeLayout.LayoutParams llp = (RelativeLayout.LayoutParams) left.getLayoutParams();
-            llp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-            llp.removeRule(RelativeLayout.ALIGN_PARENT_START);
-            llp.removeRule(RelativeLayout.START_OF);
-            llp.addRule(RelativeLayout.CENTER_HORIZONTAL);
-            llp.setMarginEnd(0);
-            left.setLayoutParams(llp);
-            left.setGravity(Gravity.CENTER_HORIZONTAL);
-
-            View clockRow = (View) clock.getParent();
-            LinearLayout.LayoutParams crp = (LinearLayout.LayoutParams) clockRow.getLayoutParams();
-            crp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-            crp.gravity = Gravity.CENTER_HORIZONTAL;
-            clockRow.setLayoutParams(crp);
-
-            View dateCol = (View) date.getParent();
-            LinearLayout.LayoutParams dcp = (LinearLayout.LayoutParams) dateCol.getLayoutParams();
-            dcp.gravity = Gravity.CENTER_HORIZONTAL;
-            dateCol.setLayoutParams(dcp);
-            if (dateCol instanceof LinearLayout) ((LinearLayout) dateCol).setGravity(Gravity.CENTER_HORIZONTAL);
-            date.setGravity(Gravity.CENTER_HORIZONTAL);
-            if (weatherRow instanceof LinearLayout) {
-                LinearLayout.LayoutParams wrp = (LinearLayout.LayoutParams) weatherRow.getLayoutParams();
-                wrp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                wrp.gravity = Gravity.CENTER_HORIZONTAL;
-                weatherRow.setLayoutParams(wrp);
-            }
-
-            RelativeLayout.LayoutParams tlp = (RelativeLayout.LayoutParams) topButtons.getLayoutParams();
-            tlp.removeRule(RelativeLayout.ALIGN_BOTTOM);
-            tlp.addRule(RelativeLayout.ALIGN_TOP, R.id.leftBlock);
-            tlp.topMargin = Math.round(6 * density);
-            tlp.bottomMargin = 0;
-            topButtons.setLayoutParams(tlp);
-        }
-    }
-
-    /** Applies theme-matched pill backgrounds with a clear focused-state rim so D-pad focus stays crisp. */
-    private void styleThemedPills(String theme) {
-        int bgColor = HomeTheme.pillBgColor(theme);
-        int strokeColor = HomeTheme.pillStrokeColor(theme);
-        if (bgColor == 0 || strokeColor == 0) return;
-        float radius = HomeTheme.pillCornerDp(theme) * density;
-        int focusAccent = HomeTheme.focusAccent(theme);
-        int focusBg = focusAccent != 0 ? ((focusAccent & 0x00FFFFFF) | 0x33000000) : 0x44FFFFFF;
-        int focusStroke = focusAccent != 0 ? focusAccent : 0xFFFFFFFF;
-        int strokePx = Math.max(1, Math.round(density));
-        int focusStrokePx = Math.max(2, Math.round(2f * density));
-
-        List<View> pills = new ArrayList<>(Arrays.asList(btnInputs, btnWifi, btnVpn, btnReorder, btnLibraryTop, findViewById(R.id.btnSettings)));
-        pills.addAll(topAppButtons);
-        for (View pill : pills) {
-            if (pill == null) continue;
-            GradientDrawable normal = new GradientDrawable();
-            normal.setColor(bgColor);
-            normal.setCornerRadius(radius);
-            normal.setStroke(strokePx, strokeColor);
-
-            GradientDrawable focused = new GradientDrawable();
-            focused.setColor(focusBg);
-            focused.setCornerRadius(radius);
-            focused.setStroke(focusStrokePx, focusStroke);
-
-            android.graphics.drawable.StateListDrawable state = new android.graphics.drawable.StateListDrawable();
-            state.addState(new int[]{android.R.attr.state_focused}, focused);
-            state.addState(new int[]{}, normal);
-            pill.setBackground(state);
-        }
-    }
-
-    /**
      * Replaces the standard dock+grid container with an architectural {@link CustomHomeLayout}
      * (Gaming, Bento/Sala, or Cinema) while keeping {@link WallpaperPlayer}, animations, and weather live.
      */
-    private void attachCustomHomeLayout(Config cfg) {
+    private void attachCustomHomeLayout() {
+        CustomHomeLayout layout;
+        try {
+            switch (homeTheme) {
+                case HomeTheme.GAMING: layout = new ArenaHomeLayout(this); break;
+                case HomeTheme.MINIMAL: layout = new ZenHomeLayout(this); break;
+                case HomeTheme.BENTO: layout = new BentoHomeLayout(this); break;
+                case HomeTheme.CINEMA: layout = new CinemaHomeLayout(this); break;
+                default: layout = new AuraHomeLayout(this); break;
+            }
+        } catch (RuntimeException e) {
+            // A layout that cannot build must never cost the TV its Home: keep the standard one.
+            android.util.Log.e("TvHome", "Home layout " + homeTheme + " failed, using the standard one", e);
+            return;
+        }
         View standard = findViewById(R.id.standardContent);
         if (standard != null) standard.setVisibility(View.GONE);
         hero.setVisibility(View.GONE);
@@ -2890,13 +2718,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         View scrim = findViewById(R.id.heroScrim);
         if (scrim != null) scrim.setVisibility(View.GONE);
 
-        if (HomeTheme.GAMING.equals(homeTheme)) {
-            customLayout = new GamingHomeLayout(this);
-        } else if (HomeTheme.BENTO.equals(homeTheme)) {
-            customLayout = new BentoHomeLayout(this);
-        } else {
-            customLayout = new CinemaHomeLayout(this);
-        }
+        customLayout = layout;
         View view = customLayout.rootView();
         root.addView(view, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -2951,6 +2773,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             @Override
             public String wifiLabel() {
                 return lastWifiLabel.isEmpty() ? getString(R.string.wifi) : lastWifiLabel;
+            }
+
+            @Override
+            public void openForecast(int accent) {
+                MainActivity.this.openForecast(accent);
+            }
+
+            @Override
+            public String greetingName() {
+                return greetingName;
             }
         };
     }
@@ -3331,19 +3163,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         } else {
             String base = greetingName.isEmpty() ? getString(res)
                     : getString(R.string.greeting_with_name, getString(res), greetingName);
-            if (HomeTheme.GAMING.equals(homeTheme)) {
-                greeting.setText(getString(R.string.home_theme_gaming));
-            } else if (HomeTheme.CINEMA.equals(homeTheme)) {
-                greeting.setText(greetingName.isEmpty()
-                        ? getString(R.string.home_theme_cinema)
-                        : getString(R.string.home_theme_cinema) + " \u00B7 " + greetingName);
-            } else if (HomeTheme.BENTO.equals(homeTheme)) {
-                greeting.setText(greetingName.isEmpty()
-                        ? getString(R.string.home_theme_bento)
-                        : getString(R.string.home_theme_bento) + " \u00B7 " + greetingName);
-            } else {
-                greeting.setText(base);
-            }
+            greeting.setText(base);
             greeting.setTextColor(greetingColor);
         }
         if (shamsi) shamsiDate.setText(Shamsi.today(getResources()));

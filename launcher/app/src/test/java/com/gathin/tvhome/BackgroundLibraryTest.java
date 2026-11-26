@@ -92,26 +92,17 @@ public class BackgroundLibraryTest {
         assertEquals("Snowy night", BackgroundLibrary.imageLabel(new File("snowy-night.jpg"), ""));
     }
 
-    @Test public void everyBackgroundMovesOnceTheSwitchIsOn() {
-        assertEquals(0, Config.wallpaperDrift(false, 4));
-        assertEquals(0, Config.wallpaperDrift(false, 0));
-        assertEquals(4, Config.wallpaperDrift(true, 4));
-        assertEquals(Config.DEFAULT_DRIFT, Config.wallpaperDrift(true, 0));
-        assertEquals(WallpaperMotion.NONE, Config.wallpaperEffect(false, "rain"));
-        assertEquals("rain", Config.wallpaperEffect(true, "rain"));
-        assertEquals(WallpaperMotion.MOTES, Config.wallpaperEffect(true, WallpaperMotion.NONE));
-        assertEquals(WallpaperMotion.MOTES, Config.wallpaperEffect(true, ""));
-    }
-
     @Test public void rowsUnderTheDockHideOnlyWhileAsked() {
         assertTrue(GridNavigation.veiled(true, 6, 6));
         assertFalse(GridNavigation.veiled(true, 5, 6));
         assertFalse(GridNavigation.veiled(false, 6, 6));
     }
 
-    @Test public void wallpaperAnimationFallsBackToLegacySwitchAndResolvesAllModes() {
+    @Test public void oneAnimationForEveryBackground() {
         assertEquals(Config.WALLPAPER_ANIMATION_NONE, Config.wallpaperAnimation(null, false));
-        assertEquals(Config.WALLPAPER_ANIMATION_AUTO, Config.wallpaperAnimation(null, true));
+        // The old switch and "match background" both become the default animation.
+        assertEquals(WallpaperMotion.MOTES, Config.wallpaperAnimation(null, true));
+        assertEquals(WallpaperMotion.MOTES, Config.wallpaperAnimation("auto", false));
         assertEquals(Config.WALLPAPER_ANIMATION_WEATHER, Config.wallpaperAnimation("weather", false));
         assertEquals(WallpaperMotion.FIREFLIES, Config.wallpaperAnimation(" FIREFLIES ", false));
         assertEquals(WallpaperMotion.STORM, Config.wallpaperAnimation("storm", false));
@@ -121,10 +112,10 @@ public class BackgroundLibraryTest {
         assertTrue(Config.wallpaperAnimationEnabled(Config.WALLPAPER_ANIMATION_WEATHER));
         assertTrue(Config.wallpaperAnimationEnabled(WallpaperMotion.SUNBEAMS));
 
-        assertEquals(WallpaperMotion.NONE, Config.wallpaperEffectForAnimation(Config.WALLPAPER_ANIMATION_NONE, "rain"));
-        assertEquals(WallpaperMotion.RAIN, Config.wallpaperEffectForAnimation(Config.WALLPAPER_ANIMATION_AUTO, "rain"));
-        assertEquals(WallpaperMotion.MOTES, Config.wallpaperEffectForAnimation(Config.WALLPAPER_ANIMATION_AUTO, ""));
-        assertEquals(WallpaperMotion.FIREFLIES, Config.wallpaperEffectForAnimation(WallpaperMotion.FIREFLIES, "rain"));
+        assertEquals(WallpaperMotion.NONE, Config.wallpaperEffectFor(Config.WALLPAPER_ANIMATION_NONE));
+        assertEquals(WallpaperMotion.MOTES, Config.wallpaperEffectFor(Config.WALLPAPER_ANIMATION_WEATHER));
+        assertEquals(WallpaperMotion.FIREFLIES, Config.wallpaperEffectFor(WallpaperMotion.FIREFLIES));
+        assertEquals(WallpaperMotion.NONE, Config.wallpaperEffectFor(null));
     }
 
     @Test public void rotationIntervalOverrideRespectsBounds() {

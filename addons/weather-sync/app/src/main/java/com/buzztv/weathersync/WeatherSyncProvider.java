@@ -14,17 +14,22 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * Headless ContentProvider for BuzzTV live weather.
  * Automatically detects the TV's approximate city via HTTPS IP geolocation (cached 12h),
- * fetches current weather from Open-Meteo (cached 30m), and returns a single-row cursor
- * at content://com.buzztv.weathersync/current. No background service, no polling.
+ * fetches current weather and a 7-day forecast from Open-Meteo in one request (cached 30m), and serves
+ * content://com.buzztv.weathersync/current (one row) and content://com.buzztv.weathersync/forecast (one row a day).
+ * No background service, no polling.
  */
 public final class WeatherSyncProvider extends ContentProvider {
     private static final String TAG = "BuzzTV.WeatherSync";
     private static final String PREFS = "weather_sync_cache";
-    private static final String[] COLUMNS = {"temp_c", "weather_code", "is_day", "city", "effect", "updated_at"};
+    /** Older launchers read the first six by index, so new columns only ever go at the end. */
+    private static final String[] COLUMNS = {"temp_c", "weather_code", "is_day", "city", "effect", "updated_at",
+            "feels_c", "humidity", "wind_kmh"};
+    private static final String[] FORECAST_COLUMNS = {"date", "weather_code", "max_c", "min_c", "precip_pct"};
     private static final long WEATHER_TTL_MS = 30 * 60_000L;
     private static final long RETRY_BACKOFF_MS = 5 * 60_000L;
     private static final long LOCATION_TTL_MS = 12 * 60 * 60_000L;
@@ -44,8 +49,18 @@ public final class WeatherSyncProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Context ctx = getContext();
-        if (ctx == null) return new MatrixCursor(COLUMNS);
+        boolean forecast = "forecast".equals(uri.getLastPathSegment());
+        if (ctx == null) return new MatrixCursor(forecast ? FORECAST_COLUMNS : COLUMNS);
         WeatherLogic.Reading reading = getOrRefresh(ctx);
+        if (forecast) {
+            List<WeatherLogic.Day> days = WeatherLogic.decodeForecast(
+                    ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("forecast", ""));
+            MatrixCursor cursor = new MatrixCursor(FORECAST_COLUMNS, days.size());
+            for (WeatherLogic.Day d : days) {
+                cursor.addRow(new Object[]{d.date, d.weatherCode, d.maxC, d.minC, d.precipPct});
+            }
+            return cursor;
+        }
         MatrixCursor cursor = new MatrixCursor(COLUMNS, 1);
         if (reading != null) {
             cursor.addRow(new Object[]{
@@ -54,7 +69,10 @@ public final class WeatherSyncProvider extends ContentProvider {
                     reading.isDay ? 1 : 0,
                     reading.city,
                     reading.effect,
-                    reading.updatedAt
+                    reading.updatedAt,
+                    reading.feelsC,
+                    reading.humidity,
+                    reading.windKmh
             });
         }
         return cursor;
@@ -65,7 +83,9 @@ public final class WeatherSyncProvider extends ContentProvider {
             SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             long now = System.currentTimeMillis();
             WeatherLogic.Reading cached = readCached(prefs);
-            if (cached != null && (now - cached.updatedAt) < WEATHER_TTL_MS) {
+            // A cache from version 1.0 has no forecast: refresh it once instead of waiting out the TTL.
+            boolean hasForecast = !prefs.getString("forecast", "").isEmpty();
+            if (cached != null && hasForecast && (now - cached.updatedAt) < WEATHER_TTL_MS) {
                 return cached;
             }
             long lastAttempt = prefs.getLong("last_attempt_at", 0L);
@@ -81,6 +101,10 @@ public final class WeatherSyncProvider extends ContentProvider {
             WeatherLogic.Reading fresh = WeatherLogic.parseWeather(body, loc.city, now);
             if (fresh != null) {
                 saveCached(prefs, fresh);
+                List<WeatherLogic.Day> days = WeatherLogic.parseForecast(body);
+                if (!days.isEmpty()) {
+                    prefs.edit().putString("forecast", WeatherLogic.encodeForecast(days)).apply();
+                }
                 return fresh;
             }
             return cached;
@@ -127,7 +151,10 @@ public final class WeatherSyncProvider extends ContentProvider {
                 prefs.getInt("is_day", 1) != 0,
                 prefs.getString("city", ""),
                 prefs.getString("effect", "motes"),
-                updatedAt);
+                updatedAt,
+                prefs.getInt("feels_c", WeatherLogic.UNKNOWN),
+                prefs.getInt("humidity", WeatherLogic.UNKNOWN),
+                prefs.getInt("wind_kmh", WeatherLogic.UNKNOWN));
     }
 
     private static void saveCached(SharedPreferences prefs, WeatherLogic.Reading r) {
@@ -138,6 +165,9 @@ public final class WeatherSyncProvider extends ContentProvider {
                 .putString("city", r.city)
                 .putString("effect", r.effect)
                 .putLong("updated_at", r.updatedAt)
+                .putInt("feels_c", r.feelsC)
+                .putInt("humidity", r.humidity)
+                .putInt("wind_kmh", r.windKmh)
                 .apply();
     }
 
@@ -148,7 +178,7 @@ public final class WeatherSyncProvider extends ContentProvider {
             conn.setConnectTimeout(TIMEOUT_MS);
             conn.setReadTimeout(TIMEOUT_MS);
             conn.setRequestMethod("GET");
-            conn.setRequestProperty("User-Agent", "BuzzTV-WeatherSync/1.0");
+            conn.setRequestProperty("User-Agent", "BuzzTV-WeatherSync/1.1");
             if (conn.getResponseCode() != 200) return null;
             try (InputStream in = conn.getInputStream();
                  ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -171,7 +201,9 @@ public final class WeatherSyncProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        return "vnd.android.cursor.item/vnd.com.buzztv.weathersync.current";
+        return "forecast".equals(uri.getLastPathSegment())
+                ? "vnd.android.cursor.dir/vnd.com.buzztv.weathersync.forecast"
+                : "vnd.android.cursor.item/vnd.com.buzztv.weathersync.current";
     }
 
     @Override

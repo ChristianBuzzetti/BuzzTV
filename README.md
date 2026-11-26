@@ -1,20 +1,29 @@
 # BuzzTV
 
-> **BuzzTV** es un fork de [CleanYourTV (`Gathin23/cleanyourtv`)](https://github.com/Gathin23/cleanyourtv) bajo licencia **MIT**. Conserva intacta la filosofía del proyecto original —sin publicidad, sin telemetría, sin permiso `INTERNET` en el launcher, desactivación reversible (`pm disable-user`) y compilación 100 % desde el código fuente— y suma **5 diseños de pantalla de inicio completamente distintos**, **selector de fondos en la TV**, **9 efectos animados livianos**, **rotación automática configurable** y **clima en vivo** en Inicio y en el protector de pantalla.
+> **BuzzTV** es un fork de [CleanYourTV (`Gathin23/cleanyourtv`)](https://github.com/Gathin23/cleanyourtv) bajo licencia **MIT**. Conserva intacta la filosofía del proyecto original —sin publicidad, sin telemetría, sin permiso `INTERNET` en el launcher, desactivación reversible (`pm disable-user`) y compilación 100 % desde el código fuente— y suma **6 diseños de pantalla de inicio** (Aura, el nuevo por defecto, toma el color de la app enfocada), **selector de fondos en la TV**, **9 efectos animados livianos**, **rotación automática configurable** y **clima en vivo con pronóstico de 7 días**.
 
 ---
 
-## Los 5 diseños de inicio
+## Los 6 diseños de inicio
 
-En **Configuración del launcher → Diseño / Tema**, elegís la arquitectura de tu pantalla de inicio de forma totalmente independiente del fondo y la animación:
+En **Configuración del launcher → Diseño / Tema** elegís la arquitectura de tu pantalla de inicio, independiente del fondo y la animación. BuzzTV abre en **Aura**.
 
-| Diseño | Vista real en TV |
+| Diseño | Vista |
 |---|---|
-| **Sala (`bento`)**<br>Dashboard Bento en 2 columnas: tarjeta translúcida con reloj grande, fecha y clima en vivo a la izquierda, grilla 2×2 de apps con foco ámbar a la derecha y barra inferior de 3 botones (*Aplicaciones*, *Entradas*, *Configuración*). | ![Diseño Sala](docs/screenshots/theme-sala.jpg) |
-| **Cine en casa (`cinema`)**<br>Escenario cinematográfico con título principal en dorado cálido, píldora primaria *Abrir*, accesos rápidos a *Entradas* y *Configuración*, y 4 tarjetas grandes translúcidas en la base. | ![Diseño Cine en casa](docs/screenshots/theme-cine.jpg) |
-| **Modo Juego (`gaming`)**<br>Estilo consola: lista vertical de apps con borde verde esmeralda a la izquierda, panel spotlight gigante a la derecha y barra de estado inferior (*Entradas*, *Wi-Fi*, *Configuración*). | ![Diseño Modo Juego](docs/screenshots/theme-juego.jpg) |
-| **Minimalista (`minimal`)**<br>Reloj grande centrado, fecha y clima arriba, controles compactos de iconos en la esquina superior derecha y 5 tarjetas flotantes sin banda de fondo. | ![Diseño Minimalista](docs/screenshots/theme-minimalista.jpg) |
-| **Estándar (`standard`)**<br>El diseño clásico tipo Apple TV de CleanYourTV: reloj y clima arriba a la izquierda y dock horizontal inferior. | ![Diseño Estándar](docs/screenshots/theme-estandar.jpg) |
+| **Aura (`aura`, por defecto)**<br>Reloj grande y fino con saludo, fecha y clima; una fila de tarjetas abajo. **La pantalla toma el color de la app enfocada**: un aura suave sube detrás de la fila con ese color y la sigue mientras navegás. | ![Diseño Aura](docs/screenshots/theme-aura.jpg) |
+| **Arena (`gaming`, juegos)**<br>HUD arriba (hora, clima, fecha), íconos cuadrados con foco neón, el nombre de la app enorme y haces de luz diagonales con su color. Barra inferior con *Consolas / HDMI*, *Biblioteca* y *Ajustes*. | ![Diseño Arena](docs/screenshots/theme-arena.jpg) |
+| **Zen (`minimal`, minimalista)**<br>Solo tipografía sobre el fondo: reloj enorme abajo a la izquierda y las apps como una columna de nombres que se iluminan y muestran su ícono al enfocarlas. | ![Diseño Zen](docs/screenshots/theme-zen.jpg) |
+| **Sala (`bento`)**<br>Dashboard Bento: tarjeta con reloj, fecha y clima a la izquierda, grilla 2×2 de apps a la derecha y barra de 3 botones. | ![Diseño Sala](docs/screenshots/theme-sala.jpg) |
+| **Cine en casa (`cinema`)**<br>Escenario cinematográfico con título en dorado cálido, botón *Abrir* y tarjetas grandes en la base. | ![Diseño Cine en casa](docs/screenshots/theme-cine.jpg) |
+| **Estándar (`standard`)**<br>El diseño clásico de CleanYourTV: reloj y clima arriba a la izquierda y dock horizontal. | ![Diseño Estándar](docs/screenshots/theme-estandar.jpg) |
+
+> Las vistas de Aura, Arena, Zen y del pronóstico son renders del código real a 1920×1080 con apps de ejemplo; reemplazalas por capturas de tu TV (`tools/tv.py --screenshot`).
+
+### Pronóstico extendido
+
+En todos los diseños, el clima es un botón: **OK** abre el pronóstico de 7 días con las condiciones actuales (sensación, humedad, viento, probabilidad de lluvia) y una tarjeta por día con máxima, mínima y una barra de rango de frío a calor.
+
+![Pronóstico extendido](docs/screenshots/pronostico.jpg)
 
 ---
 
@@ -30,11 +39,12 @@ Todo se configura directamente con el control remoto desde **Configuración del 
 
 ## Qué incluye BuzzTV
 
-- **5 diseños de inicio independientes del fondo** (`Estándar`, `Cine en casa`, `Sala`, `Modo Juego`, `Minimalista`), con navegación 100 % determinista por D-pad.
-- **Selector de fondos en la TV (`Fondo`)**: elegí una imagen puntual, una sección al azar o todos los fondos al azar sin usar la computadora.
-- **9 efectos animados livianos (`Animación de fondo`)**: `Desactivada`, `Según fondo`, `Según clima`, o elegir manualmente entre `Lluvia`, `Tormenta` (con relámpagos suaves), `Nieve`, `Estrellas` (con estrellas fugaces), `Rayos de sol`, `Nubes`, `Burbujas`, `Luciérnagas` y `Partículas`. Todos corren a ≤30 fps sin asignaciones por cuadro y se detienen al abrir una app o al apagar la TV.
+- **6 diseños de inicio independientes del fondo** (`Aura`, `Arena`, `Zen`, `Sala`, `Cine en casa`, `Estándar`), construidos con un mismo kit visual y navegación por D-pad.
+- **Pronóstico extendido de 7 días** al pulsar OK sobre el clima, en cualquier diseño.
+- **Selector de fondos en la TV (`Fondo`)**: elegí una imagen puntual, una sección al azar o todos los fondos al azar sin usar la computadora. Los fondos se ven **enteros**: sin zoom que recorte bordes, y una imagen con otra proporción se encuadra sobre un fondo suave de sus propios colores en vez de cortarse.
+- **9 efectos animados livianos (`Animación de fondo`)**, **la misma animación en todos los fondos**: `Desactivada`, `Según clima`, o elegir manualmente entre `Lluvia`, `Tormenta` (con relámpagos suaves), `Nieve`, `Estrellas` (con estrellas fugaces), `Rayos de sol`, `Nubes`, `Burbujas`, `Luciérnagas` y `Partículas`. Todos corren a ≤30 fps sin asignaciones por cuadro y se detienen al abrir una app o al apagar la TV.
 - **Intervalo de rotación de fondo (`Rotación de fondo`)**: chips rápidos (`1 min`, `5 min`, `10 min`, `20 min`, `1 h`) para fondos rotativos.
-- **Clima en vivo (`Clima en vivo`)**: muestra temperatura, condición y ciudad en Inicio y en el protector de pantalla (`ClockDream` / `ClockActivity`), y puede adaptar automáticamente la animación del fondo al clima real. El launcher sigue **sin permiso `INTERNET`**: los datos llegan localmente desde el add-on opcional [`addons/weather-sync/`](addons/weather-sync/) vía `ContentProvider` (`content://com.buzztv.weathersync/current`).
+- **Clima en vivo (`Clima en vivo`)**: muestra temperatura, condición y ciudad en Inicio y en el protector de pantalla (`ClockDream` / `ClockActivity`), abre el pronóstico de 7 días, y puede adaptar automáticamente la animación del fondo al clima real. El launcher sigue **sin permiso `INTERNET`**: los datos llegan localmente desde el add-on opcional [`addons/weather-sync/`](addons/weather-sync/) vía `ContentProvider` (`content://com.buzztv.weathersync/current`).
 - **Debloat seguro y reversible** heredado de CleanYourTV: solo usa `pm disable-user --user 0`, nunca desinstala paquetes del sistema y siempre guarda respaldo previo (`tools/restore.sh` / `tools/restore.ps1`).
 
 ---

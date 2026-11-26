@@ -5,8 +5,8 @@ import android.view.View;
 import java.util.List;
 
 /**
- * Bridge between {@link MainActivity} and custom full-screen {@link CustomHomeLayout} themes
- * (Gaming, Bento/Sala, Cinema). Keeps wallpapers, animations, live weather, and system actions shared.
+ * Bridge between {@link MainActivity} and the custom full-screen {@link CustomHomeLayout} themes
+ * (Aura, Arena, Zen, Sala, Cine). Keeps wallpapers, animations, live weather and system actions shared.
  */
 interface HomeLayoutHost {
     List<AppAdapter.Entry> dockApps();
@@ -18,4 +18,8 @@ interface HomeLayoutHost {
     void openLauncherSettings();
     void openAllApps();
     String wifiLabel();
+    /** Opens the 7-day forecast, tinted with the layout's accent (0 for BuzzTV honey). */
+    void openForecast(int accent);
+    /** The theme's greeting name from config ("" when none). */
+    String greetingName();
 }

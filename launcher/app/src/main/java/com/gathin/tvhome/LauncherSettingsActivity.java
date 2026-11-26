@@ -334,7 +334,6 @@ public final class LauncherSettingsActivity extends Activity {
 
     private static final String[] ANIMATION_OPTIONS = {
             Config.WALLPAPER_ANIMATION_NONE,
-            Config.WALLPAPER_ANIMATION_AUTO,
             Config.WALLPAPER_ANIMATION_WEATHER,
             WallpaperMotion.RAIN,
             WallpaperMotion.STORM,
@@ -374,7 +373,6 @@ public final class LauncherSettingsActivity extends Activity {
 
     private String animationLabel(String key) {
         switch (key == null ? Config.WALLPAPER_ANIMATION_NONE : key) {
-            case Config.WALLPAPER_ANIMATION_AUTO: return getString(R.string.animation_auto);
             case Config.WALLPAPER_ANIMATION_WEATHER: return getString(R.string.animation_weather);
             case WallpaperMotion.RAIN: return getString(R.string.animation_rain);
             case WallpaperMotion.STORM: return getString(R.string.animation_storm);

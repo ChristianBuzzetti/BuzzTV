@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -97,9 +99,15 @@ final class WallpaperPlayer {
             preferences.edit().putString("collection", collection)
                     .remove("image").remove("changed").apply();
         }
-        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        width = metrics.widthPixels;
-        height = metrics.heightPixels;
+        // The whole panel, not the app area: a status or navigation bar on some firmware would otherwise make every
+        // 16:9 picture look like a different shape and get framed instead of filling the screen.
+        DisplayMetrics metrics = new DisplayMetrics();
+        android.hardware.display.DisplayManager dm = context.getSystemService(android.hardware.display.DisplayManager.class);
+        android.view.Display display = dm == null ? null : dm.getDisplay(android.view.Display.DEFAULT_DISPLAY);
+        if (display != null) display.getRealMetrics(metrics);
+        else metrics = context.getResources().getDisplayMetrics();
+        width = Math.max(metrics.widthPixels, metrics.heightPixels);
+        height = Math.min(metrics.widthPixels, metrics.heightPixels);
         image = new ImageView(context);
         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -351,6 +359,26 @@ final class WallpaperPlayer {
         if (old != null && old != bitmap) image.postDelayed(old::recycle, 500);
     }
 
+    /**
+     * A screen-sized picture with the whole of {@code src} fitted in the middle and the bars around it filled with
+     * src itself, shrunk to 32 pixels across and stretched back over the screen: a soft, out-of-focus wash of the
+     * picture's own colours, made once per picture here on the decoder thread and never redrawn.
+     */
+    private Bitmap frame(Bitmap src) {
+        Bitmap out = Bitmap.createBitmap(width, height, bitmapConfig);
+        Canvas canvas = new Canvas(out);
+        Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
+        int tw = 32, th = Math.max(1, Math.round(32f * src.getHeight() / src.getWidth()));
+        Bitmap tiny = Bitmap.createScaledBitmap(src, tw, th, true);
+        int[] c = WallpaperSize.coverRect(tw, th, width, height);
+        canvas.drawBitmap(tiny, new Rect(c[0], c[1], c[2], c[3]), new Rect(0, 0, width, height), paint);
+        tiny.recycle();
+        canvas.drawColor(0x73000000);
+        int[] f = WallpaperSize.fitRect(src.getWidth(), src.getHeight(), width, height);
+        canvas.drawBitmap(src, null, new Rect(f[0], f[1], f[2], f[3]), paint);
+        return out;
+    }
+
     private Bitmap decode(File file) {
         try {
             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -362,7 +390,8 @@ final class WallpaperPlayer {
             if (!WallpaperSize.accepted(width / sample, height / sample)) return null;
             options.inJustDecodeBounds = false;
             options.inSampleSize = sample;
-            int[] scale = WallpaperSize.coverScale(width / sample, height / sample, this.width, this.height);
+            boolean fit = WallpaperSize.needsFit(width, height, this.width, this.height);
+            int[] scale = fit ? null : WallpaperSize.coverScale(width / sample, height / sample, this.width, this.height);
             if (scale != null) {
                 options.inScaled = true;
                 options.inDensity = scale[0];
@@ -376,6 +405,11 @@ final class WallpaperPlayer {
             options.inMutable = dimColor != 0;
             Bitmap decoded = BitmapFactory.decodeFile(file.getPath(), options);
             if (decoded == null) return null;
+            if (fit) {
+                Bitmap framed = frame(decoded);
+                decoded.recycle();
+                decoded = framed;
+            }
             if (dimColor != 0) new Canvas(decoded).drawColor(dimColor);
             // One copy in GPU memory instead of a software bitmap plus its texture; the decode stays off the UI
             // thread for rotations, and Home's return no longer uploads 4-8 MB to the GPU.

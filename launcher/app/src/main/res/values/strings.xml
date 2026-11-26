@@ -184,12 +184,11 @@
     <string name="home_theme_standard">Standard</string>
     <string name="home_theme_cinema">Home Cinema</string>
     <string name="home_theme_bento">Living Room</string>
-    <string name="home_theme_gaming">Game Mode</string>
-    <string name="home_theme_minimal">Minimal</string>
+    <string name="home_theme_gaming">Arena (games)</string>
+    <string name="home_theme_minimal">Zen (minimal)</string>
     <string name="wallpaper_animation_label">Background animation</string>
     <string name="wallpaper_animation_state">Background animation: %1$s</string>
     <string name="animation_none">Off</string>
-    <string name="animation_auto">Match background</string>
     <string name="animation_weather">Match weather</string>
     <string name="animation_rain">Rain</string>
     <string name="animation_storm">Thunderstorm</string>
@@ -209,4 +208,27 @@
     <string name="cinema_open">▶  Open</string>
     <string name="cinema_subtitle">Favorite app · Press OK to open</string>
     <string name="cinema_all_apps_subtitle">Browse all installed apps</string>
+    <string name="home_theme_aura">Aura</string>
+    <string name="aura_hint">OK to open</string>
+    <string name="arena_play">Play</string>
+    <string name="arena_browse">Browse</string>
+    <string name="arena_inputs">Consoles / HDMI</string>
+    <string name="forecast_title">Extended forecast</string>
+    <string name="forecast_open">Press OK for the 7-day forecast</string>
+    <string name="forecast_today">Today</string>
+    <string name="forecast_tomorrow">Tomorrow</string>
+    <string name="forecast_now">Right now</string>
+    <string name="forecast_max">High %1$d°</string>
+    <string name="forecast_min">Low %1$d°</string>
+    <string name="forecast_feels">Feels like %1$d°</string>
+    <string name="forecast_humidity">Humidity %1$d%%</string>
+    <string name="forecast_wind">Wind %1$d km/h</string>
+    <string name="forecast_rain">Chance of rain %1$d%%</string>
+    <string name="forecast_hint">Left and right to see each day · Back to close</string>
+    <string name="forecast_loading">Loading the forecast…</string>
+    <string name="forecast_missing">Update BuzzTV Weather Sync to version 1.1 or later to see the 7-day forecast.</string>
+    <string name="degrees" translatable="false">%1$d°</string>
+    <string name="percent" translatable="false">%1$d%%</string>
+    <string name="all_apps_short">All apps</string>
+    <string name="arena_library">Library</string>
 </resources>

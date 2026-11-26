@@ -49,4 +49,26 @@ public class WallpaperSizeTest {
         int t = WallpaperSize.sampleSize(65535, 2159, 1920, 1080);
         org.junit.Assert.assertFalse(WallpaperSize.accepted(65535 / t, 2159 / t));
     }
+
+    @Test public void sixteenByNinePicturesFillAnySixteenByNineScreen() {
+        assertFalse(WallpaperSize.needsFit(1920, 1080, 1920, 1080));
+        assertFalse(WallpaperSize.needsFit(1536, 864, 3840, 2160));
+        assertFalse(WallpaperSize.needsFit(1792, 1008, 1280, 720));
+        assertFalse(WallpaperSize.needsFit(0, 0, 1920, 1080));
+    }
+
+    @Test public void otherShapesAreShownWholeInsteadOfCropped() {
+        assertTrue(WallpaperSize.needsFit(1600, 1200, 1920, 1080));   // 4:3
+        assertTrue(WallpaperSize.needsFit(3440, 1440, 1920, 1080));   // ultrawide
+        assertTrue(WallpaperSize.needsFit(1080, 1920, 1920, 1080));   // a phone photo
+        org.junit.Assert.assertArrayEquals(new int[]{240, 0, 1680, 1080},
+                WallpaperSize.fitRect(1600, 1200, 1920, 1080));
+        org.junit.Assert.assertArrayEquals(new int[]{0, 138, 1920, 942},
+                WallpaperSize.fitRect(3440, 1440, 1920, 1080));
+    }
+
+    @Test public void coverRectTakesTheCentreInTheScreensShape() {
+        org.junit.Assert.assertArrayEquals(new int[]{0, 3, 32, 21}, WallpaperSize.coverRect(32, 24, 1920, 1080));
+        org.junit.Assert.assertArrayEquals(new int[]{2, 0, 30, 16}, WallpaperSize.coverRect(32, 16, 1920, 1080));
+    }
 }
