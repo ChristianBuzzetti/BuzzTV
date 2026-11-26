@@ -27,6 +27,8 @@ final class MosaicHomeLayout implements CustomHomeLayout {
     private final TextView weatherNow;
     private final LinearLayout bars;
     private final LinearLayout grid;
+    private final View btnInputs;
+    private final View btnSettings;
     private final List<View> tiles = new ArrayList<>();
     private HomeLayoutHost host;
     private View lastTile;
@@ -55,10 +57,33 @@ final class MosaicHomeLayout implements CustomHomeLayout {
         left.setOrientation(LinearLayout.VERTICAL);
         left.setClipChildren(false);
         across.addView(left, new LinearLayout.LayoutParams(dp(260), ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout.LayoutParams brandLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+        // Brand on the left, Inputs and Settings on the right: OK on Settings opens the TV's settings and holding
+        // it opens BuzzTV's Ajustes, as in every other layout, so this one is never a dead end.
+        LinearLayout topRow = new LinearLayout(ctx);
+        topRow.setOrientation(LinearLayout.HORIZONTAL);
+        topRow.setGravity(Gravity.CENTER_VERTICAL);
+        topRow.setClipChildren(false);
+        topRow.setClipToPadding(false);
+        LinearLayout.LayoutParams topLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        brandLp.bottomMargin = dp(16);
-        left.addView(Buzz.brand(ctx, 20, 14, 0.85f), brandLp);
+        topLp.bottomMargin = dp(14);
+        left.addView(topRow, topLp);
+        topRow.addView(Buzz.brand(ctx, 20, 14, 0.85f), new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        btnInputs = Buzz.iconButton(ctx, R.drawable.ic_input, R.string.inputs, accent);
+        btnSettings = Buzz.iconButton(ctx, R.drawable.ic_settings, R.string.settings, accent);
+        for (View b : new View[]{btnInputs, btnSettings}) {
+            b.setId(View.generateViewId());
+            LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(dp(40), dp(40));
+            bl.setMarginStart(dp(10));
+            topRow.addView(b, bl);
+        }
+        btnInputs.setOnClickListener(v -> host.openInputs(v));
+        btnSettings.setOnClickListener(v -> host.openSettings());
+        btnSettings.setOnLongClickListener(v -> {
+            host.openLauncherSettings();
+            return true;
+        });
         TextClock weekday = Buzz.date(ctx, 13, accent, R.string.font_medium);
         weekday.setFormat12Hour("EEEE");
         weekday.setFormat24Hour("EEEE");
@@ -89,6 +114,9 @@ final class MosaicHomeLayout implements CustomHomeLayout {
         weatherCard.setBackground(Buzz.states(Buzz.round(0xC70E101A, r, Math.max(1, dp(1)), 0x24FFFFFF),
                 Buzz.round(0xE00E101A, r, dp(2), accent)));
         weatherCard.setOnClickListener(v -> host.openForecast(accent));
+        weatherCard.setNextFocusUpId(btnSettings.getId());
+        btnInputs.setNextFocusDownId(weatherCard.getId());
+        btnSettings.setNextFocusDownId(weatherCard.getId());
         Buzz.lift(weatherCard, 1.03f, null);
         weatherNow = Buzz.text(ctx, 15, Buzz.TEXT, R.string.font_regular);
         weatherNow.setText(R.string.panel_weather_off);
@@ -177,9 +205,15 @@ final class MosaicHomeLayout implements CustomHomeLayout {
         }
         View target = restore != null ? restore : tiles.get(0);
         lastTile = target;
-        weatherCard.setNextFocusRightId(target.getId());
+        pointAt(target);
         if (root.findFocus() == null || restore != null) root.post(target::requestFocus);
         host.readForecast(this::fillBars);
+    }
+
+    /** Right from the weather card and from Settings returns to the tile last in focus. */
+    private void pointAt(View tile) {
+        weatherCard.setNextFocusRightId(tile.getId());
+        btnSettings.setNextFocusRightId(tile.getId());
     }
 
     private LinearLayout line(float weight) {
@@ -208,7 +242,7 @@ final class MosaicHomeLayout implements CustomHomeLayout {
         Buzz.lift(t, hero ? 1.04f : 1.08f, (v, f) -> {
             if (f) {
                 lastTile = v;
-                weatherCard.setNextFocusRightId(v.getId());
+                pointAt(v);
             }
         });
         return t;

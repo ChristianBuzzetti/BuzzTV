@@ -252,6 +252,8 @@
     <string name="design_greeting">Mostrar saludo</string>
     <string name="design_inputs_row">Fila de entradas (HDMI)</string>
     <string name="design_use">Usar este diseño</string>
+    <string name="design_use_named">Usar %1$s</string>
+    <string name="design_in_use">En uso</string>
     <string name="design_cancel">Cancelar</string>
     <string name="design_live">VISTA PREVIA EN VIVO</string>
     <string name="home_theme_marquee">Marquesina</string>
@@ -302,6 +304,7 @@
     <string name="panel_home">Inicio</string>
     <string name="panel_apps">Apps</string>
     <string name="panel_weather">Clima</string>
+    <string name="panel_settings">Ajustes</string>
     <string name="panel_weather_off">Activa Clima en vivo en Ajustes</string>
     <string name="orbit_hint">◀ ▶ girar · OK abrir</string>
     <string name="mosaic_week">OK · toda la semana</string>

@@ -264,6 +264,8 @@
     <string name="design_greeting">Show greeting</string>
     <string name="design_inputs_row">Inputs row (HDMI)</string>
     <string name="design_use">Use this layout</string>
+    <string name="design_use_named">Use %1$s</string>
+    <string name="design_in_use">In use</string>
     <string name="design_cancel">Cancel</string>
     <string name="design_live">LIVE PREVIEW</string>
     <string name="home_theme_marquee">Marquee</string>
@@ -314,6 +316,7 @@
     <string name="panel_home">Home</string>
     <string name="panel_apps">Apps</string>
     <string name="panel_weather">Weather</string>
+    <string name="panel_settings">Settings</string>
     <string name="panel_weather_off">Turn on Live weather in Settings</string>
     <string name="orbit_hint">◀ ▶ turn · OK open</string>
     <string name="mosaic_week">OK · the whole week</string>

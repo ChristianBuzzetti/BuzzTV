@@ -256,6 +256,8 @@
     <string name="design_greeting">הצגת ברכה</string>
     <string name="design_inputs_row">שורת כניסות (HDMI)</string>
     <string name="design_use">שימוש בעיצוב זה</string>
+    <string name="design_use_named">שימוש ב־%1$s</string>
+    <string name="design_in_use">בשימוש</string>
     <string name="design_cancel">ביטול</string>
     <string name="design_live">תצוגה חיה</string>
     <string name="home_theme_marquee">מרקיזה</string>
@@ -306,6 +308,7 @@
     <string name="panel_home">בית</string>
     <string name="panel_apps">אפליקציות</string>
     <string name="panel_weather">מזג אוויר</string>
+    <string name="panel_settings">הגדרות</string>
     <string name="panel_weather_off">הפעילו מזג אוויר חי בהגדרות</string>
     <string name="orbit_hint">◀ ▶ סיבוב · OK פתיחה</string>
     <string name="mosaic_week">OK · כל השבוע</string>
