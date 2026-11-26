@@ -80,6 +80,11 @@ final class OrbitHomeLayout implements CustomHomeLayout {
             return true;
         });
 
+        // The signature, small, at the top centre between the two corner buttons.
+        FrameLayout.LayoutParams bl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        bl.topMargin = dp(36);
+        root.addView(Buzz.brand(ctx, 18, 13, 0.8f), bl);
         LinearLayout center = new LinearLayout(ctx);
         center.setOrientation(LinearLayout.VERTICAL);
         center.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -100,7 +105,7 @@ final class OrbitHomeLayout implements CustomHomeLayout {
         center.addView(chip, cl);
         FrameLayout.LayoutParams ctl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        ctl.topMargin = dp(46);
+        ctl.topMargin = dp(64);
         root.addView(center, ctl);
 
         dial = new FrameLayout(ctx);

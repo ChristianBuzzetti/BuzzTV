@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/brand/buzztv-banner.png" alt="BuzzTV" width="480"></p>
+
 # BuzzTV
 
 > **BuzzTV** es un fork de [CleanYourTV (`Gathin23/cleanyourtv`)](https://github.com/Gathin23/cleanyourtv) bajo licencia **MIT**. Conserva intacta la filosofía del proyecto original —sin publicidad, sin telemetría, sin permiso `INTERNET` en el launcher, desactivación reversible (`pm disable-user`) y compilación 100 % desde el código fuente— y suma **7 diseños de pantalla de inicio** (Marquesina por defecto), **un menú de ajustes nuevo con vista previa en vivo**, **selector de fondos en la TV**, **9 efectos animados livianos**, **rotación automática configurable** y **clima en vivo con pronóstico de 7 días**.
@@ -105,6 +107,9 @@ adb -s 192.168.1.50:5555 install -r app/build/outputs/apk/release/app-release.ap
 - [Procedimiento de debloat seguro (`PROMPT.md`)](PROMPT.md)
 
 ## Licencia y créditos
+
+El logo de BuzzTV es la marca de [BuzzPrint](https://github.com/ChristianBuzzetti/BuzzPrint), del mismo autor, redibujada como vector (`launcher/app/src/main/res/drawable/buzz_logo.xml`) para el ícono de la app, el banner de Android TV y la firma que llevan los diseños de Inicio y Ajustes.
+
 
 Distribuido bajo licencia **MIT** ([`LICENSE`](LICENSE)).  
 Basado en [CleanYourTV](https://github.com/Gathin23/cleanyourtv) por Gathin23 y colaboradores.

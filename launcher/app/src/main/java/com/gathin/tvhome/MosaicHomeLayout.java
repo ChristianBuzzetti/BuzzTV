@@ -55,6 +55,10 @@ final class MosaicHomeLayout implements CustomHomeLayout {
         left.setOrientation(LinearLayout.VERTICAL);
         left.setClipChildren(false);
         across.addView(left, new LinearLayout.LayoutParams(dp(260), ViewGroup.LayoutParams.MATCH_PARENT));
+        LinearLayout.LayoutParams brandLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        brandLp.bottomMargin = dp(16);
+        left.addView(Buzz.brand(ctx, 20, 14, 0.85f), brandLp);
         TextClock weekday = Buzz.date(ctx, 13, accent, R.string.font_medium);
         weekday.setFormat12Hour("EEEE");
         weekday.setFormat24Hour("EEEE");

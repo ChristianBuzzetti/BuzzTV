@@ -145,12 +145,10 @@ public final class LauncherSettingsActivity extends Activity {
         FrameLayout.LayoutParams hl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(36), Gravity.TOP);
         hl.setMargins(dp(48), dp(18), dp(48), 0);
         root.addView(header, hl);
-        TextView logo = Buzz.text(this, 14, 0xFF1A1204, R.string.font_medium);
-        logo.setText("b");
-        logo.setGravity(Gravity.CENTER);
-        logo.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{0xFFFFD36B, 0xFFF59E0B}));
-        ((GradientDrawable) logo.getBackground()).setCornerRadius(dp(8));
-        header.addView(logo, new LinearLayout.LayoutParams(dp(26), dp(26)));
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.buzz_logo);
+        logo.setContentDescription(getString(R.string.app_name));
+        header.addView(logo, new LinearLayout.LayoutParams(dp(28), dp(28)));
         crumbs = new LinearLayout(this);
         crumbs.setOrientation(LinearLayout.HORIZONTAL);
         crumbs.setGravity(Gravity.CENTER_VERTICAL);

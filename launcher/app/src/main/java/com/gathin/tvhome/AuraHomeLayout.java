@@ -92,6 +92,9 @@ final class AuraHomeLayout implements CustomHomeLayout {
         left.setOrientation(LinearLayout.VERTICAL);
         left.setClipChildren(false);
         top.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams brandLp = wrap();
+        brandLp.bottomMargin = dp(14);
+        left.addView(Buzz.brand(ctx, 20, 14, 0.85f), brandLp);
         greeting = Buzz.text(ctx, 15, Buzz.TEXT_2, R.string.font_medium);
         greeting.setAllCaps(true);
         greeting.setLetterSpacing(0.2f);

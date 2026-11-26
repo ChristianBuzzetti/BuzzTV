@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive icon foreground: the BuzzPrint hexagon and eyes, inside the 66 dp safe zone of the 108 dp layer. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="0.3" android:scaleY="0.3" android:translateX="15.75" android:translateY="15.75">
+        <path android:fillColor="#FF0E1015" android:strokeColor="#FF0E1015" android:strokeWidth="16"
+            android:strokeLineJoin="round" android:pathData="M127.5,46 L199,88 L199,168 L127.5,209 L56,168 L56,88 Z" />
+        <path android:fillColor="#FFF4F4F5" android:pathData="M87.5,123.5 a14,20.5 0 1,0 28,0 a14,20.5 0 1,0 -28,0 Z M139.5,123.5 a14,20.5 0 1,0 28,0 a14,20.5 0 1,0 -28,0 Z" />
+    </group>
+</vector>

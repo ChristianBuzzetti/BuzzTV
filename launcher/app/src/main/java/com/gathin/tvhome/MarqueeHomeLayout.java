@@ -80,9 +80,7 @@ final class MarqueeHomeLayout implements CustomHomeLayout {
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setClipChildren(false);
         col.addView(top, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextView mark = Buzz.text(ctx, 18, Buzz.TEXT, R.string.font_medium);
-        mark.setText(Buzz.wordmark("buzz", accent));
-        top.addView(mark);
+        top.addView(Buzz.brand(ctx, 26, 18, 1f));
         top.addView(Buzz.spacer(ctx), new LinearLayout.LayoutParams(0, 1, 1f));
         chip = new WeatherChip(ctx, 15, Buzz.TEXT, Buzz.glassPill(ctx, 20, Buzz.HONEY), false);
         chip.setId(View.generateViewId());

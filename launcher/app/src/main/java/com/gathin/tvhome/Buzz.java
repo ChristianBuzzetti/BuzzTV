@@ -334,12 +334,40 @@ final class Buzz {
         return t;
     }
 
-    /** "buzz" + "tv" in the accent: the BuzzTV wordmark. */
-    static CharSequence wordmark(String first, int accent) {
-        android.text.SpannableString s = new android.text.SpannableString(first + "tv");
-        s.setSpan(new android.text.style.ForegroundColorSpan(accent | 0xFF000000), first.length(), first.length() + 2,
-                android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    /** BuzzTV's coral, from the BuzzPrint mark. */
+    static final int CORAL = 0xFFF43F5E;
+
+    /** "Buzz" + "TV" in coral: the BuzzTV wordmark. */
+    static CharSequence wordmark() {
+        android.text.SpannableString s = new android.text.SpannableString("BuzzTV");
+        s.setSpan(new android.text.style.ForegroundColorSpan(CORAL), 4, 6, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return s;
+    }
+
+    /**
+     * The BuzzTV signature: the BuzzPrint mark and the wordmark, small. Every BuzzTV layout carries one, quietly,
+     * so the product is always present without competing with the apps.
+     */
+    static LinearLayout brand(Context c, float logoDp, float textSp, float alpha) {
+        LinearLayout b = new LinearLayout(c);
+        b.setOrientation(LinearLayout.HORIZONTAL);
+        b.setGravity(Gravity.CENTER_VERTICAL);
+        b.setAlpha(alpha);
+        b.setFocusable(false);
+        b.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        ImageView logo = new ImageView(c);
+        logo.setImageResource(R.drawable.buzz_logo);
+        b.addView(logo, new LinearLayout.LayoutParams(dp(c, logoDp), dp(c, logoDp)));
+        if (textSp > 0) {
+            TextView t = text(c, textSp, TEXT, R.string.font_medium);
+            t.setText(wordmark());
+            shadow(t);
+            LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            tl.setMarginStart(dp(c, logoDp * 0.4f));
+            b.addView(t, tl);
+        }
+        return b;
     }
 
     /**

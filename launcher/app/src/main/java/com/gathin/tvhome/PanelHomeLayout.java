@@ -64,8 +64,7 @@ final class PanelHomeLayout implements CustomHomeLayout {
         nav.setPadding(0, dp(26), 0, dp(26));
         nav.setBackgroundColor(0xB8080A12);
         across.addView(nav, new LinearLayout.LayoutParams(dp(76), ViewGroup.LayoutParams.MATCH_PARENT));
-        TextView mark = Buzz.text(ctx, 15, Buzz.TEXT, R.string.font_medium);
-        mark.setText(Buzz.wordmark("b", accent));
+        View mark = Buzz.brand(ctx, 34, 0, 1f);
         LinearLayout.LayoutParams mp = wrap();
         mp.bottomMargin = dp(22);
         nav.addView(mark, mp);
