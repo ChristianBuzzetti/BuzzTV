@@ -119,11 +119,32 @@ final class Buzz {
     /** Scales a view up on focus and back down, raising it above its neighbours. */
     static void lift(View v, float scale, View.OnFocusChangeListener also) {
         v.setOnFocusChangeListener((view, focused) -> {
+            if (focused) unclip(view);
             float s = focused ? scale : 1f;
             view.animate().scaleX(s).scaleY(s).setDuration(FOCUS_MS).start();
             view.setTranslationZ(focused ? dp(view.getContext(), 8) : 0f);
             if (also != null) also.onFocusChange(view, focused);
         });
+    }
+
+    /**
+     * Lets a view that grows on focus draw past its parents' edges, so its ring is never cut. Every container up
+     * to the nearest scrolling one stops clipping; the scrolling one keeps its content inside its own bounds
+     * (its parent clips it), so scrolled-away rows never paint over the rest of the screen. A scroll's content
+     * carries padding for the growth.
+     */
+    static void unclip(View v) {
+        android.view.ViewParent p = v.getParent();
+        while (p instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) p;
+            g.setClipChildren(false);
+            if (g instanceof android.widget.ScrollView || g instanceof android.widget.HorizontalScrollView) {
+                g.setClipToPadding(false);
+                if (g.getParent() instanceof ViewGroup) ((ViewGroup) g.getParent()).setClipChildren(true);
+                return;
+            }
+            p = g.getParent();
+        }
     }
 
     /** A round icon button for the top bar (Inputs, Wi-Fi, Apps, Settings). */

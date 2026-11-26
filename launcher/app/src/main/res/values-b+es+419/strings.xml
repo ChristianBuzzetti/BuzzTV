@@ -302,4 +302,9 @@
     <string name="panel_weather_off">Activá Clima en vivo en Ajustes</string>
     <string name="orbit_hint">◀ ▶ girar · OK abrir</string>
     <string name="mosaic_week">OK · toda la semana</string>
+    <string name="every_1m">1 minuto</string>
+    <string name="every_5m">5 minutos</string>
+    <string name="every_10m">10 minutos</string>
+    <string name="every_20m">20 minutos</string>
+    <string name="every_60m">1 hora</string>
 </resources>

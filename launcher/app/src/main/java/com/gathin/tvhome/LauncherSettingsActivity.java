@@ -263,7 +263,7 @@ public final class LauncherSettingsActivity extends Activity {
         View design = bigCard(R.drawable.ic_layout, 0xFFFFD36B, 0xFFF59E0B, R.string.settings_design,
                 getString(HomeTheme.labelRes(theme)), getString(R.string.settings_design_hint, HomeTheme.ALL.length), this::showDesign);
         View background = bigCard(R.drawable.ic_image, 0xFF34D3C2, 0xFF0E8F86, R.string.settings_background,
-                BackgroundPicker.state(this, choices), null, this::showBackground);
+                BackgroundPicker.state(this, choices), null, this::openBackground);
         View animation = bigCard(R.drawable.ic_sparkle, 0xFFA78BFA, 0xFF6D28D9, R.string.wallpaper_animation_label,
                 animationLabel(config.wallpaperAnimation), null, this::showAnimation);
         View weatherCard = bigCard(R.drawable.ic_cloud, 0xFF7CC4FF, 0xFF2563EB, R.string.settings_weather,
@@ -657,31 +657,43 @@ public final class LauncherSettingsActivity extends Activity {
     // ---- background -----------------------------------------------------------------------------------
 
     private String gallerySection;   // null = every section
+    private static final int GALLERY_COLUMNS = 4;
+    private static final int GALLERY_MAX = 120;
+
+    /** From the hub: open on the section in use (or every picture when everything rotates). */
+    private void openBackground() {
+        String mode = choices.getString(BackgroundLibrary.MODE_KEY, null);
+        gallerySection = BackgroundLibrary.MODE_ALL.equals(mode) ? null : choices.getString(BackgroundLibrary.SECTION_KEY, null);
+        showBackground(-1);
+    }
 
     private void showBackground() {
+        showBackground(-1);
+    }
+
+    /** @param focusChip the section chip to keep the focus on after a redraw, or -1 for the chosen picture */
+    private void showBackground(int focusChip) {
         back = this::showHub;
         setCrumbs(R.string.settings_title, R.string.settings_background);
-        setKeys(new String[]{"OK", "↩"}, new int[]{R.string.key_apply, R.string.key_back});
+        setKeys(new String[]{"OK", "\u21A9"}, new int[]{R.string.key_apply, R.string.key_back});
         content.removeAllViews();
         File root = Config.dir(this);
         List<String> sections = BackgroundLibrary.sections(root);
         String mode = choices.getString(BackgroundLibrary.MODE_KEY, null);
-        if (gallerySection == null && !BackgroundLibrary.MODE_ALL.equals(mode)) {
-            gallerySection = choices.getString(BackgroundLibrary.SECTION_KEY, null);
-        }
 
         LinearLayout across = new LinearLayout(this);
         across.setOrientation(LinearLayout.HORIZONTAL);
-        across.setClipChildren(false);
         content.addView(across, match());
 
+        // The left column clips: the chip row and the gallery scroll inside it and never paint over the panel.
         LinearLayout left = new LinearLayout(this);
         left.setOrientation(LinearLayout.VERTICAL);
-        left.setClipChildren(false);
+        left.setClipChildren(true);
         across.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.BOTTOM);
+        head.setPadding(dp(14), 0, dp(14), 0);
         left.addView(head);
         TextView title = Buzz.text(this, 30, Buzz.TEXT, R.string.font_medium);
         title.setText(R.string.settings_background);
@@ -697,61 +709,66 @@ public final class LauncherSettingsActivity extends Activity {
             TextView empty = Buzz.text(this, 15, Buzz.TEXT_2, R.string.font_regular);
             empty.setSingleLine(false);
             empty.setText(R.string.background_empty);
+            empty.setPadding(dp(14), 0, dp(14), 0);
             LinearLayout.LayoutParams el = wrap();
             el.topMargin = dp(24);
             left.addView(empty, el);
         } else {
             HorizontalScrollView chipScroll = new HorizontalScrollView(this);
             chipScroll.setHorizontalScrollBarEnabled(false);
-            chipScroll.setClipToPadding(false);
+            chipScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
             LinearLayout chips = new LinearLayout(this);
             chips.setOrientation(LinearLayout.HORIZONTAL);
-            chips.setPadding(dp(2), dp(4), dp(2), dp(4));
+            chips.setClipChildren(false);
+            // Room on every side for a chip that grows on focus.
+            chips.setPadding(dp(14), dp(10), dp(14), dp(10));
             chipScroll.addView(chips);
             LinearLayout.LayoutParams csl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            csl.topMargin = dp(12);
+            csl.topMargin = dp(4);
             left.addView(chipScroll, csl);
             List<String> chipIds = new ArrayList<>();
             chipIds.add(null);
             chipIds.addAll(sections);
-            for (String s : chipIds) {
-                TextView c = textChoice(s == null ? getString(R.string.background_all) : ThemeLibrary.label(s));
-                ((LinearLayout.LayoutParams) c.getLayoutParams()).setMarginEnd(dp(8));
-                c.setSelected(s == null ? gallerySection == null : s.equals(gallerySection));
+            View keep = null;
+            for (int i = 0; i < chipIds.size(); i++) {
+                String sec = chipIds.get(i);
+                final int index = i;
+                TextView c = textChoice(sec == null ? getString(R.string.background_all) : ThemeLibrary.label(sec));
+                ((LinearLayout.LayoutParams) c.getLayoutParams()).setMarginEnd(dp(10));
+                c.setSelected(sec == null ? gallerySection == null : sec.equals(gallerySection));
                 c.setOnClickListener(v -> {
-                    gallerySection = s;
-                    showBackground();
+                    gallerySection = sec;
+                    showBackground(index);
                 });
                 chips.addView(c);
+                if (i == focusChip) keep = c;
             }
 
             ScrollView scroll = new ScrollView(this);
             scroll.setVerticalScrollBarEnabled(false);
-            scroll.setClipToPadding(false);
+            scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
             LinearLayout rows = new LinearLayout(this);
             rows.setOrientation(LinearLayout.VERTICAL);
             rows.setClipChildren(false);
-            rows.setPadding(dp(4), dp(8), dp(4), dp(8));
+            rows.setPadding(dp(14), dp(10), dp(14), dp(14));
             scroll.addView(rows);
-            LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
-            sl.topMargin = dp(6);
-            left.addView(scroll, sl);
+            left.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
             List<File> pics = new ArrayList<>();
-            if (gallerySection == null) for (String s : sections) pics.addAll(BackgroundLibrary.images(root, s));
+            if (gallerySection == null) for (String sec : sections) pics.addAll(BackgroundLibrary.images(root, sec));
             else pics.addAll(BackgroundLibrary.images(root, gallerySection));
-            if (pics.size() > 60) pics = pics.subList(0, 60);
+            if (pics.size() > GALLERY_MAX) pics = pics.subList(0, GALLERY_MAX);
             String picked = BackgroundLibrary.MODE_IMAGE.equals(mode) ? choices.getString(BackgroundLibrary.IMAGE_KEY, null) : null;
             String pickedSection = choices.getString(BackgroundLibrary.SECTION_KEY, null);
             LinearLayout line = null;
             List<View> cells = new ArrayList<>();
             View first = null;
             for (int i = 0; i < pics.size(); i++) {
-                if (i % 3 == 0) {
+                if (i % GALLERY_COLUMNS == 0) {
                     line = new LinearLayout(this);
                     line.setOrientation(LinearLayout.HORIZONTAL);
                     line.setClipChildren(false);
-                    LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(104));
-                    ll.bottomMargin = dp(12);
+                    LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(84));
+                    ll.bottomMargin = dp(14);
                     rows.addView(line, ll);
                 }
                 File f = pics.get(i);
@@ -760,27 +777,28 @@ public final class LauncherSettingsActivity extends Activity {
                 View cell = picture(f, section, selected, cells);
                 cells.add(cell);
                 LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-                cl.setMarginEnd(i % 3 == 2 ? 0 : dp(12));
+                cl.setMarginEnd(i % GALLERY_COLUMNS == GALLERY_COLUMNS - 1 ? 0 : dp(14));
                 line.addView(cell, cl);
                 if (first == null || selected) first = cell;
             }
             if (line != null) {
-                for (int i = pics.size(); i % 3 != 0; i++) {
+                for (int i = pics.size(); i % GALLERY_COLUMNS != 0; i++) {
                     LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-                    cl.setMarginEnd(i % 3 == 2 ? 0 : dp(12));
+                    cl.setMarginEnd(i % GALLERY_COLUMNS == GALLERY_COLUMNS - 1 ? 0 : dp(14));
                     line.addView(Buzz.spacer(this), cl);
                 }
             }
-            if (first != null) first.requestFocus();
+            View target = keep != null ? keep : first;
+            if (target != null) target.requestFocus();
         }
 
-        // Right: how the picture is chosen, how often it changes, the animation.
+        // Right: how the picture is chosen, how often it changes (only when it does), the animation.
         LinearLayout aside = new LinearLayout(this);
         aside.setOrientation(LinearLayout.VERTICAL);
-        aside.setPadding(dp(16), dp(16), dp(16), dp(16));
-        aside.setBackground(Buzz.round(0xB8101420, dp(18), Math.max(1, dp(1)), 0x1AFFFFFF));
-        LinearLayout.LayoutParams asl = new LinearLayout.LayoutParams(dp(250), ViewGroup.LayoutParams.MATCH_PARENT);
-        asl.setMarginStart(dp(26));
+        aside.setPadding(dp(18), dp(18), dp(18), dp(18));
+        aside.setBackground(Buzz.round(0xB8101420, dp(20), Math.max(1, dp(1)), 0x1AFFFFFF));
+        LinearLayout.LayoutParams asl = new LinearLayout.LayoutParams(dp(262), ViewGroup.LayoutParams.MATCH_PARENT);
+        asl.setMarginStart(dp(18));
         across.addView(aside, asl);
         aside.addView(Buzz.kicker(this, R.string.background_how, Buzz.TEXT_3));
         String current = gallerySection != null ? gallerySection : choices.getString(BackgroundLibrary.SECTION_KEY, null);
@@ -789,6 +807,7 @@ public final class LauncherSettingsActivity extends Activity {
                 {BackgroundLibrary.MODE_SECTION, getString(R.string.background_mode_section),
                         current == null ? getString(R.string.background_mode_section_sub) : ThemeLibrary.label(current)},
                 {BackgroundLibrary.MODE_ALL, getString(R.string.background_mode_all), getString(R.string.background_mode_all_sub)}};
+        View firstMode = null;
         for (String[] m : modes) {
             View r = radio(m[1], m[2], m[0].equals(mode), () -> {
                 if (BackgroundLibrary.MODE_ALL.equals(m[0])) saveBackground(BackgroundLibrary.MODE_ALL, null, null);
@@ -799,32 +818,116 @@ public final class LauncherSettingsActivity extends Activity {
                 } else return;
                 showBackground();
             });
-            LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+            LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
             rl.topMargin = dp(8);
             aside.addView(r, rl);
+            if (firstMode == null) firstMode = r;
         }
-        LinearLayout.LayoutParams k2 = wrap();
-        k2.topMargin = dp(18);
-        aside.addView(Buzz.kicker(this, R.string.background_every, Buzz.TEXT_3), k2);
-        int rot = choices.getInt(Config.WALLPAPER_ROTATION_KEY, BackgroundLibrary.DEFAULT_ROTATION_MINUTES);
-        String[] rotLabels = {getString(R.string.rotation_1m), getString(R.string.rotation_5m), getString(R.string.rotation_10m),
-                getString(R.string.rotation_20m), getString(R.string.rotation_60m)};
-        int rotIdx = 3;
-        for (int i = 0; i < Config.WALLPAPER_ROTATION_CHOICES.length; i++) if (Config.WALLPAPER_ROTATION_CHOICES[i] == rot) rotIdx = i;
-        View seg = segmented(rotLabels, rotIdx, i -> {
-            choices.edit().putInt(Config.WALLPAPER_ROTATION_KEY, Config.WALLPAPER_ROTATION_CHOICES[i]).apply();
-            changed();
-        });
-        ((LinearLayout.LayoutParams) seg.getLayoutParams()).topMargin = dp(8);
-        aside.addView(seg);
+        // A fixed picture never changes: no interval to choose.
+        boolean rotates = BackgroundLibrary.MODE_SECTION.equals(mode) || BackgroundLibrary.MODE_ALL.equals(mode);
+        if (rotates) {
+            LinearLayout.LayoutParams k2 = wrap();
+            k2.topMargin = dp(16);
+            aside.addView(Buzz.kicker(this, R.string.background_every, Buzz.TEXT_3), k2);
+            int rot = choices.getInt(Config.WALLPAPER_ROTATION_KEY, BackgroundLibrary.DEFAULT_ROTATION_MINUTES);
+            int rotIdx = 3;
+            for (int i = 0; i < Config.WALLPAPER_ROTATION_CHOICES.length; i++) if (Config.WALLPAPER_ROTATION_CHOICES[i] == rot) rotIdx = i;
+            String[] rotLabels = {getString(R.string.every_1m), getString(R.string.every_5m), getString(R.string.every_10m),
+                    getString(R.string.every_20m), getString(R.string.every_60m)};
+            View stepper = stepper(rotLabels, rotIdx, i -> {
+                choices.edit().putInt(Config.WALLPAPER_ROTATION_KEY, Config.WALLPAPER_ROTATION_CHOICES[i]).apply();
+                changed();
+            });
+            LinearLayout.LayoutParams stl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(60));
+            stl.topMargin = dp(8);
+            aside.addView(stepper, stl);
+        }
         LinearLayout.LayoutParams k3 = wrap();
-        k3.topMargin = dp(18);
+        k3.topMargin = dp(16);
         aside.addView(Buzz.kicker(this, R.string.wallpaper_animation_label, Buzz.TEXT_3), k3);
         View anim = actionRow(animationLabel(config.wallpaperAnimation), "", this::showAnimation);
-        LinearLayout.LayoutParams anl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        LinearLayout.LayoutParams anl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
         anl.topMargin = dp(8);
         aside.addView(anim, anl);
-        if (sections.isEmpty()) aside.getChildAt(1).requestFocus();
+        if (sections.isEmpty() && firstMode != null) firstMode.requestFocus();
+    }
+
+    /**
+     * One value at a time, changed with Left and Right: "◀  20 minutes  ▶" with a dot per choice under it. Takes
+     * a narrow column far better than five chips side by side.
+     */
+    private View stepper(String[] values, int selected, java.util.function.IntConsumer pick) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER);
+        box.setFocusable(true);
+        box.setClickable(true);
+        float r = dp(16);
+        box.setBackground(Buzz.states(Buzz.round(0x8C141824, r, Math.max(1, dp(1)), 0x1AFFFFFF),
+                Buzz.round(0x33FFC53D, r, dp(2), Buzz.HONEY)));
+        LinearLayout line = new LinearLayout(this);
+        line.setOrientation(LinearLayout.HORIZONTAL);
+        line.setGravity(Gravity.CENTER_VERTICAL);
+        box.addView(line, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        ImageView prev = new ImageView(this);
+        prev.setImageResource(R.drawable.ic_chevron);
+        prev.setRotation(180f);
+        line.addView(prev, new LinearLayout.LayoutParams(dp(22), dp(22)));
+        TextView value = Buzz.text(this, 17, Buzz.TEXT, R.string.font_medium);
+        value.setGravity(Gravity.CENTER);
+        line.addView(value, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        ImageView nextIcon = new ImageView(this);
+        nextIcon.setImageResource(R.drawable.ic_chevron);
+        line.addView(nextIcon, new LinearLayout.LayoutParams(dp(22), dp(22)));
+        LinearLayout dots = new LinearLayout(this);
+        dots.setOrientation(LinearLayout.HORIZONTAL);
+        dots.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams dl = wrap();
+        dl.topMargin = dp(8);
+        box.addView(dots, dl);
+        List<View> dotViews = new ArrayList<>();
+        for (int i = 0; i < values.length; i++) {
+            View d = new View(this);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(6), dp(6));
+            lp.setMargins(dp(3), 0, dp(3), 0);
+            dots.addView(d, lp);
+            dotViews.add(d);
+        }
+        box.setPadding(dp(12), dp(10), dp(12), dp(10));
+        int[] at = {selected};
+        Runnable paint = () -> {
+            value.setText(values[at[0]]);
+            prev.setAlpha(at[0] == 0 ? 0.25f : 1f);
+            nextIcon.setAlpha(at[0] == values.length - 1 ? 0.25f : 1f);
+            for (int i = 0; i < dotViews.size(); i++) {
+                boolean on = i == at[0];
+                dotViews.get(i).setBackground(Buzz.round(on ? Buzz.HONEY : 0x40FFFFFF, dp(3), 0, 0));
+            }
+            box.setContentDescription(getString(R.string.background_every) + ": " + values[at[0]]);
+        };
+        paint.run();
+        box.setOnKeyListener((v, code, e) -> {
+            if (code != android.view.KeyEvent.KEYCODE_DPAD_LEFT && code != android.view.KeyEvent.KEYCODE_DPAD_RIGHT) return false;
+            int next = at[0] + (code == android.view.KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : -1);
+            // Past either end the key moves the focus out as usual.
+            if (next < 0 || next >= values.length) return false;
+            if (e.getAction() != android.view.KeyEvent.ACTION_DOWN) return true;
+            at[0] = next;
+            paint.run();
+            pick.accept(next);
+            return true;
+        });
+        box.setOnClickListener(v -> {
+            at[0] = (at[0] + 1) % values.length;
+            paint.run();
+            pick.accept(at[0]);
+        });
+        Buzz.lift(box, 1.03f, (v, f) -> {
+            int tint = f ? Buzz.HONEY : Buzz.TEXT;
+            prev.setColorFilter(tint);
+            nextIcon.setColorFilter(tint);
+        });
+        return box;
     }
 
     private static String sectionOf(File f) {
@@ -880,6 +983,8 @@ public final class LauncherSettingsActivity extends Activity {
 
     /** The picture's caption when its folder has captions.txt, else its file name without the leading number. */
     private String pictureName(File f) {
+        // A section's single wallpaper.jpg is named after its section ("Synthwave"), not "Wallpaper".
+        if (Config.WALLPAPER_NAME.equals(f.getName())) return ThemeLibrary.label(sectionOf(f));
         File dir = f.getParentFile();
         Map<String, String> names = captions.get(String.valueOf(dir));
         if (names == null) {
@@ -900,7 +1005,7 @@ public final class LauncherSettingsActivity extends Activity {
             return;
         }
         io.execute(() -> {
-            Bitmap b = decode(f, 360);
+            Bitmap b = decode(f, 280);
             if (b == null) return;
             main.post(() -> {
                 thumbs.put(f.getPath(), b);

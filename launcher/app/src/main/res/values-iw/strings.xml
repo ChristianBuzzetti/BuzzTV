@@ -309,4 +309,9 @@
     <string name="panel_weather_off">הפעילו מזג אוויר חי בהגדרות</string>
     <string name="orbit_hint">◀ ▶ סיבוב · OK פתיחה</string>
     <string name="mosaic_week">OK · כל השבוע</string>
+    <string name="every_1m">דקה</string>
+    <string name="every_5m">5 דקות</string>
+    <string name="every_10m">10 דקות</string>
+    <string name="every_20m">20 דקות</string>
+    <string name="every_60m">שעה</string>
 </resources>

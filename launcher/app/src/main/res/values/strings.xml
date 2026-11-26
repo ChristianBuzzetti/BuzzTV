@@ -317,4 +317,9 @@
     <string name="panel_weather_off">Turn on Live weather in Settings</string>
     <string name="orbit_hint">◀ ▶ turn · OK open</string>
     <string name="mosaic_week">OK · the whole week</string>
+    <string name="every_1m">1 minute</string>
+    <string name="every_5m">5 minutes</string>
+    <string name="every_10m">10 minutes</string>
+    <string name="every_20m">20 minutes</string>
+    <string name="every_60m">1 hour</string>
 </resources>
